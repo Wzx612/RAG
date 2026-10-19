@@ -1,0 +1,33 @@
+# --- secrets ---------------------------------------------------------------
+.env
+*.env.local
+
+# --- python ----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- model cache -----------------------------------------------------------
+.cache/
+huggingface/
+
+# --- generated artefacts ---------------------------------------------------
+# reports/results.md and reports/figures/*.png ARE committed on purpose --
+# they are graded deliverables. Intermediate run logs are not.
+reports/runs/
+*.log
+
+# --- os / editor -----------------------------------------------------------
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

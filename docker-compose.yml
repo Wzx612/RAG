@@ -1,0 +1,57 @@
+name: apex-rag
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${APEX_PG_USER:-apex}
+      POSTGRES_PASSWORD: ${APEX_PG_PASSWORD:-apex}
+      POSTGRES_DB: ${APEX_PG_DATABASE:-apex_rag}
+      # Read by docker/init.sh to size the bootstrap HNSW index.
+      APEX_HNSW_M: ${APEX_HNSW_M:-16}
+      APEX_HNSW_EF_CONSTRUCTION: ${APEX_HNSW_EF_CONSTRUCTION:-64}
+    ports:
+      - "${APEX_PG_PORT:-5432}:5432"
+    volumes:
+      # init.sh is the entrypoint hook; init.sql is its input, kept outside
+      # docker-entrypoint-initdb.d so it is not also executed unrendered.
+      - ./docker/init.sh:/docker-entrypoint-initdb.d/10-init.sh:ro
+      - ./docker/init.sql:/opt/apex/init.sql:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${APEX_PG_USER:-apex} -d ${APEX_PG_DATABASE:-apex_rag}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+
+  app:
+    build: .
+    # Behind a profile so `docker compose up -d` brings up the database and
+    # nothing else -- the app container has no long-running command until the
+    # API lands in Phase 8. `docker compose run --rm app ...` still works.
+    profiles: ["tools"]
+    env_file:
+      - path: .env
+        required: false          # an empty/missing .env is fine; defaults apply
+    environment:
+      APEX_PG_HOST: db           # overrides the localhost default for in-network access
+      APEX_PG_PORT: 5432
+    volumes:
+      - ./:/app                  # live source for development
+      - hf_cache:/app/.cache/huggingface   # keep downloaded models across runs
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Phase 8 (bonus) -- uncomment when the API lands.
+  # api:
+  #   build: .
+  #   command: uvicorn src.api.app:app --host 0.0.0.0 --port 8000
+  #   ports: ["8000:8000"]
+  #   depends_on:
+  #     db: { condition: service_healthy }
+
+volumes:
+  pgdata:
+  hf_cache:
