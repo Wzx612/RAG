@@ -11,6 +11,8 @@ from pathlib import Path
 from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from src.schema.retrieval import RetrievalStrategy
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 """Repository root. Configured paths are relative to it, not to the CWD."""
 
@@ -95,6 +97,32 @@ class Settings(BaseSettings):
     )
     rag_max_context_chars: int = Field(default=8000, ge=200)
     rag_max_chunk_chars: int = Field(default=2000, ge=1)
+    retrieval_chunk_strategy: RetrievalStrategy = Field(
+        default="document",
+        description=(
+            "Chunking strategy every retriever is scoped to. Several strategies "
+            "may coexist in the chunks table; mixing them would invalidate metrics."
+        ),
+    )
+
+    # --- LLM-as-a-Judge (optional evaluation layer) ----------------------
+    # The judge reuses the generation endpoint and key. ``judge_model`` falls
+    # back to ``llm_model`` so the project works without extra configuration;
+    # reports record whether the two model ids are the same.
+    judge_model: str | None = Field(
+        default=None,
+        description="APEX_JUDGE_MODEL; None falls back to APEX_LLM_MODEL.",
+    )
+    judge_temperature: float = Field(default=0.0, ge=0.0, le=2.0)
+    judge_max_tokens: int = Field(default=1024, ge=1, le=32768)
+    judge_max_concurrency: int = Field(default=1, ge=1, le=32)
+    judge_low_score_threshold: int = Field(
+        default=3,
+        ge=1,
+        le=5,
+        description="Scores strictly below this are listed as low-score samples.",
+    )
+    judge_output_dir: Path = Path("reports/judge")
 
     # --- Ingestion --------------------------------------------------------
     expected_document_count: int = Field(
@@ -106,6 +134,10 @@ class Settings(BaseSettings):
     data_dir: Path = Path("data")
     reports_dir: Path = Path("reports")
     figures_dir: Path = Path("reports/figures")
+
+    # --- API --------------------------------------------------------------
+    api_host: str = Field(default="127.0.0.1", description="Bind address for `serve`.")
+    api_port: int = Field(default=8000, ge=1, le=65535, description="Port for `serve`.")
 
     def resolve(self, path: Path) -> Path:
         """Anchor a configured relative path at the project root.
@@ -126,6 +158,11 @@ class Settings(BaseSettings):
             f"user={self.pg_user} password={self.pg_password} "
             f"connect_timeout={self.pg_connect_timeout}"
         )
+
+    @property
+    def resolved_judge_model(self) -> str:
+        """Return ``APEX_JUDGE_MODEL`` or the answer model when it is unset."""
+        return (self.judge_model or self.llm_model).strip()
 
 
 @lru_cache(maxsize=1)

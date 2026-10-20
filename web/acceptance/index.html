@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="信用卡知识库 RAG 检索评估的只读验收看板">
+  <title>RAG 评测验收看板</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到主要内容</a>
+
+  <header class="page-header">
+    <div class="masthead">
+      <p class="eyebrow">Apex · 信用卡知识库 RAG</p>
+      <h1>评测验收看板</h1>
+      <p class="lede">
+        只读展示已落盘的评测 artifact。指标不重算，未运行项保持
+        <strong>NOT RUN</strong>，缺失值不按 0 分处理。
+      </p>
+    </div>
+    <div class="status-cluster" aria-live="polite">
+      <span id="overall-status" class="badge badge-loading">正在加载</span>
+      <span class="readonly-chip">只读</span>
+    </div>
+  </header>
+
+  <div id="error-banner" class="banner banner-error" role="alert" hidden>
+    <span id="error-text"></span>
+    <button id="retry-button" class="button button-quiet" type="button">重试</button>
+  </div>
+
+  <nav class="tabs" role="tablist" aria-label="验收视图">
+    <button id="tab-overview" class="tab" role="tab" type="button"
+            aria-controls="panel-overview" aria-selected="true" tabindex="0"
+            data-panel="overview">总览</button>
+    <button id="tab-retrieval" class="tab" role="tab" type="button"
+            aria-controls="panel-retrieval" aria-selected="false" tabindex="-1"
+            data-panel="retrieval">检索</button>
+    <button id="tab-index" class="tab" role="tab" type="button"
+            aria-controls="panel-index" aria-selected="false" tabindex="-1"
+            data-panel="index">索引</button>
+    <button id="tab-chunking" class="tab" role="tab" type="button"
+            aria-controls="panel-chunking" aria-selected="false" tabindex="-1"
+            data-panel="chunking">分块</button>
+    <button id="tab-rerank" class="tab" role="tab" type="button"
+            aria-controls="panel-rerank" aria-selected="false" tabindex="-1"
+            data-panel="rerank">精排</button>
+    <button id="tab-judge" class="tab" role="tab" type="button"
+            aria-controls="panel-judge" aria-selected="false" tabindex="-1"
+            data-panel="judge">Judge</button>
+    <button id="tab-evidence" class="tab" role="tab" type="button"
+            aria-controls="panel-evidence" aria-selected="false" tabindex="-1"
+            data-panel="evidence">证据与限制</button>
+  </nav>
+
+  <main id="main" class="page-main">
+    <section id="panel-overview" class="panel" role="tabpanel"
+             aria-labelledby="tab-overview" tabindex="0">
+      <noscript>
+        <p class="banner banner-error">本页需要 JavaScript 才能读取验收数据。</p>
+      </noscript>
+      <div id="overview-meta" class="section-note">正在读取 artifact…</div>
+      <div id="summary-cards" class="stat-grid" aria-label="关键状态"></div>
+      <div id="checks" class="stack"></div>
+      <div id="artifact-table" class="stack"></div>
+      <div id="dataset" class="stack"></div>
+    </section>
+
+    <section id="panel-retrieval" class="panel" role="tabpanel"
+             aria-labelledby="tab-retrieval" tabindex="0" hidden>
+      <div id="retrieval-content" class="section-note">正在读取 artifact…</div>
+    </section>
+
+    <section id="panel-index" class="panel" role="tabpanel"
+             aria-labelledby="tab-index" tabindex="0" hidden>
+      <div id="index-content" class="section-note">正在读取 artifact…</div>
+    </section>
+
+    <section id="panel-chunking" class="panel" role="tabpanel"
+             aria-labelledby="tab-chunking" tabindex="0" hidden>
+      <div id="chunking-content" class="section-note">正在读取 artifact…</div>
+    </section>
+
+    <section id="panel-rerank" class="panel" role="tabpanel"
+             aria-labelledby="tab-rerank" tabindex="0" hidden>
+      <div id="rerank-content" class="section-note">正在读取 artifact…</div>
+    </section>
+
+    <section id="panel-judge" class="panel" role="tabpanel"
+             aria-labelledby="tab-judge" tabindex="0" hidden>
+      <div id="judge-content" class="section-note">正在读取 artifact…</div>
+    </section>
+
+    <section id="panel-evidence" class="panel" role="tabpanel"
+             aria-labelledby="tab-evidence" tabindex="0" hidden>
+      <div id="evidence-content" class="section-note">正在读取 artifact…</div>
+    </section>
+  </main>
+
+  <footer class="page-footer">
+    <p>
+      <strong>本页只读。</strong>
+      自动检查是机械规则，展示的是 artifact 字段，<strong>不是人工验收结论</strong>。
+      页面不重算指标，不修改 <code>data/</code>、<code>reports/</code> 或数据库。
+    </p>
+    <p>
+      数据来源：<code>reports/unified/*.json</code>、
+      <code>reports/judge/judge_summary.json</code>。原始报告以 artifact 为准。
+    </p>
+  </footer>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

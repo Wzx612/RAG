@@ -54,11 +54,19 @@ def build_retriever(
         )
 
     dense = DenseRetriever(
-        DenseConfig(top_n=settings.rag_candidates, ef_search=40),
+        DenseConfig(
+            top_n=settings.rag_candidates,
+            ef_search=40,
+            chunk_strategy=settings.retrieval_chunk_strategy,
+        ),
         embedder=embedder,
     )
     sparse = SparseRetriever(
-        SparseConfig(top_n=settings.rag_candidates, query_mode="or")
+        SparseConfig(
+            top_n=settings.rag_candidates,
+            query_mode="or",
+            chunk_strategy=settings.retrieval_chunk_strategy,
+        )
     )
     fusion = RRFFusion(k=60, candidate_k=settings.rag_candidates)
     hybrid = HybridRetriever(
@@ -125,6 +133,7 @@ def build_historical_retriever(
     base = HistoricalRRFRetriever(
         historical_path,
         candidates=settings.rag_candidates,
+        chunk_strategy=settings.retrieval_chunk_strategy,
     )
     rerank_config = _rerank_config(settings, local_files_only)
     reranker = CrossEncoderReranker(rerank_config)

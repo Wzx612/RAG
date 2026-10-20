@@ -329,7 +329,11 @@ def test_provider_failure_categories_map_to_distinct_statuses(
     """Transport and auth failures must not be reported as answers."""
     provider = _Provider(
         completion_error=LLMError(
-            "failure", category=category, retryable=True, status_code=500, attempts=3  # type: ignore[arg-type]
+            "failure",
+            category=category,  # type: ignore[arg-type]
+            retryable=True,
+            status_code=500,
+            attempts=3,
         )
     )
     pipeline, _, _ = _pipeline(provider=provider)
@@ -400,7 +404,9 @@ def test_retrieval_failure_is_structured_and_stops_the_chain() -> None:
 )
 def test_reranker_failures_are_not_silently_fallen_back(stage: str, status: str) -> None:
     """A reranker failure stays visible with its stage."""
-    retriever = _Retriever([], error=RerankError("model failed", stage=stage))  # type: ignore[arg-type]
+    retriever = _Retriever(
+        [], error=RerankError("model failed", stage=stage)  # type: ignore[arg-type]
+    )
     pipeline, _, provider = _pipeline(retriever=retriever)
     result = pipeline.answer("q")
 

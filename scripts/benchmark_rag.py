@@ -167,15 +167,23 @@ def _settings_from_args(args: argparse.Namespace) -> Settings:
 def _validate_dataset(environment: dict[str, Any], dataset: dict[str, Any]) -> list[str]:
     """Return reasons the database or labels are not trustworthy."""
     settings = Settings()
+    expected_documents = settings.expected_document_count
     problems: list[str] = []
-    if environment.get("documents") != settings.expected_document_count:
+    if environment.get("documents") != expected_documents:
         problems.append(
-            f"documents={environment.get('documents')}, expected "
-            f"{settings.expected_document_count}"
+            f"documents={environment.get('documents')}, expected {expected_documents}"
         )
-    if environment.get("chunks", 0) < environment.get("documents", 0):
+    strategy_chunks = environment.get("strategy_chunks", environment.get("chunks", 0))
+    strategy_docs = environment.get("strategy_docs", environment.get("documents", 0))
+    if strategy_docs != expected_documents:
         problems.append(
-            f"chunks={environment.get('chunks')} < documents={environment.get('documents')}"
+            f"chunk doc_ids for strategy {environment.get('chunk_strategy')!r}="
+            f"{strategy_docs}, expected {expected_documents}"
+        )
+    if strategy_chunks < expected_documents:
+        problems.append(
+            f"chunks for strategy {environment.get('chunk_strategy')!r}="
+            f"{strategy_chunks}, expected at least {expected_documents}"
         )
     dimensions = environment.get("embedding_dimensions") or []
     if dimensions != [settings.embedding_dim]:
@@ -218,9 +226,12 @@ def _print_facts(
         "postgres_version",
         "vector_version",
         "server_address",
+        "chunk_strategy",
         "documents",
         "chunks",
         "distinct_chunk_docs",
+        "strategy_chunks",
+        "strategy_docs",
         "embedding_model",
         "embedding_dimensions",
         "ef_search_setting",
@@ -315,7 +326,7 @@ def _run(args: argparse.Namespace) -> int:
     else:
         queries = all_queries
 
-    environment = collect_environment()
+    environment = collect_environment(settings.retrieval_chunk_strategy)
     environment["docker_status"] = _docker_status(args.docker_timeout)
     environment["command"] = " ".join([Path(sys.executable).name, *sys.argv])
     environment["memory_before"] = _memory_snapshot()
@@ -393,15 +404,11 @@ def _run(args: argparse.Namespace) -> int:
         progress=print,
     )
 
-    environment_after = collect_environment()
+    environment_after = collect_environment(settings.retrieval_chunk_strategy)
     dataset_after = collect_dataset(all_queries)
-    counts_before = {
-        key: environment.get(key) for key in ("documents", "chunks", "distinct_chunk_docs")
-    }
-    counts_after = {
-        key: environment_after.get(key)
-        for key in ("documents", "chunks", "distinct_chunk_docs")
-    }
+    count_keys = ("documents", "chunks", "distinct_chunk_docs", "strategy_chunks", "strategy_docs")
+    counts_before = {key: environment.get(key) for key in count_keys}
+    counts_after = {key: environment_after.get(key) for key in count_keys}
     integrity_ok = (
         counts_before == counts_after
         and dataset.get("hashes") == dataset_after.get("hashes")
@@ -411,6 +418,9 @@ def _run(args: argparse.Namespace) -> int:
         "memory_after": _memory_snapshot(),
         "documents": environment_after.get("documents"),
         "chunks": environment_after.get("chunks"),
+        "chunk_strategy": environment_after.get("chunk_strategy"),
+        "strategy_chunks": environment_after.get("strategy_chunks"),
+        "strategy_docs": environment_after.get("strategy_docs"),
     }
     result["integrity"].update(
         {

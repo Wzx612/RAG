@@ -1,0 +1,533 @@
+{
+  "schema_version": 1,
+  "experiment_name": "llm_as_a_judge",
+  "status": "PARTIAL",
+  "status_reason": "mock judge completed; scores are deterministic fixtures",
+  "generated_at": "2026-10-20T05:22:18.187931+00:00",
+  "finished_at": "2026-10-20T05:22:18.188844+00:00",
+  "run_id": "judge-20261020T052218Z-39abaaca",
+  "parameters": {
+    "queries": 3,
+    "expected_queries": 30,
+    "limit": 3,
+    "max_concurrency": 1,
+    "judge_temperature": 0.0,
+    "judge_max_tokens": 1024,
+    "low_score_threshold": 3,
+    "prompt_versions": {
+      "context_relevance": "judge-context-relevance-v1",
+      "faithfulness": "judge-faithfulness-v1"
+    },
+    "score_scale": {
+      "min": 1,
+      "max": 5
+    },
+    "judge_transport": {
+      "connect_timeout_s": 5.0,
+      "read_timeout_s": 60.0,
+      "max_retries": 2
+    },
+    "rag_artifact": "/app/reports/judge-smoke/rag_answers.json",
+    "rag_status": "PARTIAL",
+    "rag_generated_at": "2026-10-20T05:22:00.568502+00:00",
+    "rag_provider_kind": "mock",
+    "rag_retrieval_mode": "live",
+    "rag_model": "mock-evidence-v1"
+  },
+  "provider": {
+    "kind": "mock",
+    "name": "mock_judge",
+    "model": "mock-judge-v1",
+    "is_real": false,
+    "api_key_present": false,
+    "real_judge_calls": false
+  },
+  "rag": {
+    "artifact_path": "/app/reports/judge-smoke/rag_answers.json",
+    "artifact_sha256": "fb6c71731383b5a4f04db77eddeeaabe8f747ebd2a4afed9ec00107ce0b9b6b6",
+    "status": "PARTIAL",
+    "status_reason": "offline/mock pipeline completed; real LLM evaluation was not run",
+    "generated_at": "2026-10-20T05:22:00.568502+00:00",
+    "provider": {
+      "kind": "mock",
+      "name": "mock",
+      "is_real": false,
+      "model": "mock-evidence-v1",
+      "endpoint": null,
+      "api_key_present": false,
+      "real_llm_calls": false,
+      "real_llm_evaluation": "not_run",
+      "llm_judge": {
+        "executed": false,
+        "reason": "No judge model, rubric or budget was configured or run."
+      }
+    },
+    "model": "mock-evidence-v1",
+    "is_real": false,
+    "retrieval_mode": "live",
+    "queries": 3
+  },
+  "environment": {
+    "execution_environment": "docker container",
+    "python_version": "3.12.13",
+    "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+    "postgres_version": "16.14 (Debian 16.14-1.pgdg12+1)",
+    "vector_version": "0.8.2",
+    "server_address": "172.22.0.2/32:5432",
+    "chunk_strategy": "document",
+    "documents": 150,
+    "chunks": 578,
+    "distinct_chunk_docs": 150,
+    "strategy_chunks": 150,
+    "strategy_docs": 150,
+    "chunk_strategies": {
+      "document": 150,
+      "fixed_window": 267,
+      "structured": 161
+    },
+    "embedding_dimensions": [
+      1024
+    ],
+    "embedding_model": "BAAI/bge-large-en-v1.5",
+    "query_instruction": "Represent this sentence for searching relevant passages: ",
+    "hnsw_index": "CREATE INDEX chunks_embedding_hnsw_idx ON public.chunks USING hnsw (embedding vector_cosine_ops) WITH (m='16', ef_construction='64')",
+    "gin_index": "CREATE INDEX chunks_tsv_gin ON public.chunks USING gin (tsv)",
+    "ef_search_setting": "40",
+    "dependency_versions": {
+      "psycopg": "3.3.6",
+      "psycopg-pool": "3.3.3",
+      "pgvector": "0.5.1",
+      "sentence-transformers": "6.1.0",
+      "torch": "2.14.1+cpu",
+      "transformers": "5.20.0",
+      "numpy": "2.5.4",
+      "pydantic": "2.14.1",
+      "psutil": "7.2.2",
+      "pytest": "9.1.1"
+    },
+    "docker_status": "not installed",
+    "command": "python scripts/evaluate_judge.py --provider mock --judge-provider mock --limit 3 --output-dir reports/judge-smoke",
+    "memory_before": {
+      "available": true,
+      "process_rss_mib": 75.1,
+      "system_available_gib": 14.07
+    }
+  },
+  "dataset": {
+    "queries": 30,
+    "gold_sizes": [
+      1,
+      2,
+      3
+    ],
+    "distinct_gold_docs": 38,
+    "missing_gold_docs": [],
+    "hashes": {
+      "kb_documents.json": "7d230e97cbf76d2ca64382e7c0278c3b24bbe27b8a8904abc9553b45a230057d",
+      "eval_queries.json": "739bd308a90e72437ccbffca658ca950f6a069f2986040cb729694a878d9bbef"
+    }
+  },
+  "summary": {
+    "queries": 3,
+    "expected_queries": 30,
+    "not_run_queries": 27,
+    "rag_status_counts": {
+      "ok": 3
+    },
+    "rag_failures": 0,
+    "both_metrics_success": 3,
+    "queries_with_judge_failure": 0,
+    "judge_is_real": false,
+    "rag_is_real": false,
+    "metrics": {
+      "context_relevance": {
+        "attempted": 3,
+        "not_attempted": 0,
+        "success": 3,
+        "failed": 0,
+        "success_rate": 1.0,
+        "failure_rate": 0.0,
+        "valid_scores": 3,
+        "mean": 4.0,
+        "median": 4,
+        "distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 3,
+          "5": 0
+        },
+        "low_score_threshold": 3,
+        "low_score_count": 0,
+        "low_score_samples": [],
+        "failure_counts": {
+          "status": {},
+          "error_category": {}
+        }
+      },
+      "faithfulness": {
+        "attempted": 3,
+        "not_attempted": 0,
+        "success": 3,
+        "failed": 0,
+        "success_rate": 1.0,
+        "failure_rate": 0.0,
+        "valid_scores": 3,
+        "mean": 4.0,
+        "median": 4,
+        "distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 3,
+          "5": 0
+        },
+        "low_score_threshold": 3,
+        "low_score_count": 0,
+        "low_score_samples": [],
+        "failure_counts": {
+          "status": {},
+          "error_category": {}
+        }
+      }
+    },
+    "same_model": false
+  },
+  "metrics": {
+    "context_relevance": {
+      "attempted": 3,
+      "not_attempted": 0,
+      "success": 3,
+      "failed": 0,
+      "success_rate": 1.0,
+      "failure_rate": 0.0,
+      "valid_scores": 3,
+      "mean": 4.0,
+      "median": 4,
+      "distribution": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 3,
+        "5": 0
+      },
+      "low_score_threshold": 3,
+      "low_score_count": 0,
+      "low_score_samples": [],
+      "failure_counts": {
+        "status": {},
+        "error_category": {}
+      }
+    },
+    "faithfulness": {
+      "attempted": 3,
+      "not_attempted": 0,
+      "success": 3,
+      "failed": 0,
+      "success_rate": 1.0,
+      "failure_rate": 0.0,
+      "valid_scores": 3,
+      "mean": 4.0,
+      "median": 4,
+      "distribution": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 3,
+        "5": 0
+      },
+      "low_score_threshold": 3,
+      "low_score_count": 0,
+      "low_score_samples": [],
+      "failure_counts": {
+        "status": {},
+        "error_category": {}
+      }
+    },
+    "llm_as_a_judge": {
+      "executed": true,
+      "real_judge_calls": false,
+      "judge_model": "mock-judge-v1",
+      "score_scale": {
+        "min": 1,
+        "max": 5
+      },
+      "aggregation": "mean, median and distribution use only status=success; failed or unattempted metrics are excluded and counted separately",
+      "latency_ms_mean": 0.0,
+      "latency_samples": 6
+    }
+  },
+  "per_query": [
+    {
+      "query_id": "Q-001",
+      "query": "How many days do I have to request a 0% intro balance transfer on Apex Platinum?",
+      "rag_run_id": "2026-10-20T05:22:00.568502+00:00",
+      "rag_status": "ok",
+      "rag_provider": "mock",
+      "rag_model": "mock-evidence-v1",
+      "rag_is_real": false,
+      "answer_sha256": "963c10611d4e24ca00faf54742ea3f45eb0dffe95bebad4a5995dfb2baa8a4e3",
+      "context_sha256": "076a18e1f5305b292160d85382daa324ac36506e93410bd755912e16ea7963aa",
+      "context_labels": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ],
+      "context_relevance": {
+        "metric": "context_relevance",
+        "status": "success",
+        "attempted": true,
+        "score": 4,
+        "reason": "MOCK JUDGE: deterministic fixture; all supplied contexts are treated as relevant.",
+        "relevant_context_ids": [
+          "E1",
+          "E2",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E8",
+          "E9",
+          "E10"
+        ],
+        "irrelevant_context_ids": [],
+        "prompt_version": "judge-context-relevance-v1",
+        "prompt_sha256": "94b246cdf4c038967ef7e0f98bc8d3f18d5edb80a6e6c17a4c863d37f521a5e1",
+        "model": "mock-judge-v1",
+        "latency_ms": 0.0,
+        "attempts": 1,
+        "usage": null,
+        "raw_response": "{\"score\": 4, \"reason\": \"MOCK JUDGE: deterministic fixture; all supplied contexts are treated as relevant.\", \"relevant_context_ids\": [\"E1\", \"E2\", \"E3\", \"E4\", \"E5\", \"E6\", \"E7\", \"E8\", \"E9\", \"E10\"], \"irrelevant_context_ids\": []}",
+        "error": null
+      },
+      "faithfulness": {
+        "metric": "faithfulness",
+        "status": "success",
+        "attempted": true,
+        "score": 4,
+        "reason": "MOCK JUDGE: deterministic fixture; the answer is treated as supported by the supplied context.",
+        "claims": [
+          {
+            "claim": "MOCK JUDGE fixture claim.",
+            "support_status": "supported",
+            "evidence_context_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "unsupported_claims": [],
+        "prompt_version": "judge-faithfulness-v1",
+        "prompt_sha256": "2ca7965dcb38cdf10c5ebf70715b0100db3637eab43445a0130bedb95cd6731b",
+        "model": "mock-judge-v1",
+        "latency_ms": 0.0,
+        "attempts": 1,
+        "usage": null,
+        "raw_response": "{\"score\": 4, \"reason\": \"MOCK JUDGE: deterministic fixture; the answer is treated as supported by the supplied context.\", \"claims\": [{\"claim\": \"MOCK JUDGE fixture claim.\", \"support_status\": \"supported\", \"evidence_context_ids\": [\"E1\"]}], \"unsupported_claims\": []}",
+        "error": null
+      }
+    },
+    {
+      "query_id": "Q-002",
+      "query": "What is the balance transfer fee for the Everyday Freedom card?",
+      "rag_run_id": "2026-10-20T05:22:00.568502+00:00",
+      "rag_status": "ok",
+      "rag_provider": "mock",
+      "rag_model": "mock-evidence-v1",
+      "rag_is_real": false,
+      "answer_sha256": "963c10611d4e24ca00faf54742ea3f45eb0dffe95bebad4a5995dfb2baa8a4e3",
+      "context_sha256": "73fb535d889e31affc5b58dc2b1f2c5a6847172fc1bf0f56bc77211731217ea7",
+      "context_labels": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ],
+      "context_relevance": {
+        "metric": "context_relevance",
+        "status": "success",
+        "attempted": true,
+        "score": 4,
+        "reason": "MOCK JUDGE: deterministic fixture; all supplied contexts are treated as relevant.",
+        "relevant_context_ids": [
+          "E1",
+          "E2",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E8",
+          "E9",
+          "E10"
+        ],
+        "irrelevant_context_ids": [],
+        "prompt_version": "judge-context-relevance-v1",
+        "prompt_sha256": "f58baddc646838cb4c4f8ac70ecedf3e110d2a3b89afc38d6be9c09c01e16d13",
+        "model": "mock-judge-v1",
+        "latency_ms": 0.0,
+        "attempts": 1,
+        "usage": null,
+        "raw_response": "{\"score\": 4, \"reason\": \"MOCK JUDGE: deterministic fixture; all supplied contexts are treated as relevant.\", \"relevant_context_ids\": [\"E1\", \"E2\", \"E3\", \"E4\", \"E5\", \"E6\", \"E7\", \"E8\", \"E9\", \"E10\"], \"irrelevant_context_ids\": []}",
+        "error": null
+      },
+      "faithfulness": {
+        "metric": "faithfulness",
+        "status": "success",
+        "attempted": true,
+        "score": 4,
+        "reason": "MOCK JUDGE: deterministic fixture; the answer is treated as supported by the supplied context.",
+        "claims": [
+          {
+            "claim": "MOCK JUDGE fixture claim.",
+            "support_status": "supported",
+            "evidence_context_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "unsupported_claims": [],
+        "prompt_version": "judge-faithfulness-v1",
+        "prompt_sha256": "4978dc728690f02490dc5707392d9c7e9b008de300c98e90ba7b0bb6deab648c",
+        "model": "mock-judge-v1",
+        "latency_ms": 0.0,
+        "attempts": 1,
+        "usage": null,
+        "raw_response": "{\"score\": 4, \"reason\": \"MOCK JUDGE: deterministic fixture; the answer is treated as supported by the supplied context.\", \"claims\": [{\"claim\": \"MOCK JUDGE fixture claim.\", \"support_status\": \"supported\", \"evidence_context_ids\": [\"E1\"]}], \"unsupported_claims\": []}",
+        "error": null
+      }
+    },
+    {
+      "query_id": "Q-003",
+      "query": "How long does it take for an external balance transfer to process on Apex Platinum?",
+      "rag_run_id": "2026-10-20T05:22:00.568502+00:00",
+      "rag_status": "ok",
+      "rag_provider": "mock",
+      "rag_model": "mock-evidence-v1",
+      "rag_is_real": false,
+      "answer_sha256": "963c10611d4e24ca00faf54742ea3f45eb0dffe95bebad4a5995dfb2baa8a4e3",
+      "context_sha256": "87a74fc1f6711d1112436abeaf11c2512998684ba48655daeed8129c69e80952",
+      "context_labels": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ],
+      "context_relevance": {
+        "metric": "context_relevance",
+        "status": "success",
+        "attempted": true,
+        "score": 4,
+        "reason": "MOCK JUDGE: deterministic fixture; all supplied contexts are treated as relevant.",
+        "relevant_context_ids": [
+          "E1",
+          "E2",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E8",
+          "E9",
+          "E10"
+        ],
+        "irrelevant_context_ids": [],
+        "prompt_version": "judge-context-relevance-v1",
+        "prompt_sha256": "4df76120bf6408d75e34c6414a71f9373347811b5d2424f474a62bd77a683d53",
+        "model": "mock-judge-v1",
+        "latency_ms": 0.0,
+        "attempts": 1,
+        "usage": null,
+        "raw_response": "{\"score\": 4, \"reason\": \"MOCK JUDGE: deterministic fixture; all supplied contexts are treated as relevant.\", \"relevant_context_ids\": [\"E1\", \"E2\", \"E3\", \"E4\", \"E5\", \"E6\", \"E7\", \"E8\", \"E9\", \"E10\"], \"irrelevant_context_ids\": []}",
+        "error": null
+      },
+      "faithfulness": {
+        "metric": "faithfulness",
+        "status": "success",
+        "attempted": true,
+        "score": 4,
+        "reason": "MOCK JUDGE: deterministic fixture; the answer is treated as supported by the supplied context.",
+        "claims": [
+          {
+            "claim": "MOCK JUDGE fixture claim.",
+            "support_status": "supported",
+            "evidence_context_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "unsupported_claims": [],
+        "prompt_version": "judge-faithfulness-v1",
+        "prompt_sha256": "cab912858e11487e5d5591ea724b8e7015d58efb2a70f6acb2da280c648e237a",
+        "model": "mock-judge-v1",
+        "latency_ms": 0.0,
+        "attempts": 1,
+        "usage": null,
+        "raw_response": "{\"score\": 4, \"reason\": \"MOCK JUDGE: deterministic fixture; the answer is treated as supported by the supplied context.\", \"claims\": [{\"claim\": \"MOCK JUDGE fixture claim.\", \"support_status\": \"supported\", \"evidence_context_ids\": [\"E1\"]}], \"unsupported_claims\": []}",
+        "error": null
+      }
+    }
+  ],
+  "limitations": [
+    "The RAG answers are mock output, so judged answer quality is not real model output.",
+    "The judge is a deterministic mock. Its scores validate the pipeline, not the quality of a real model's judgement.",
+    "Only 3 of 30 queries were judged; this smoke run does not describe the full evaluation set.",
+    "Judge scores are model-generated judgements, not ground truth; no human review or inter-judge agreement was performed.",
+    "Context Relevance scores the supplied evidence only; it is not retrieval Recall and does not show that the right document was retrieved.",
+    "Faithfulness uses only the evidence actually sent to the answer model. A claim that is true but absent from that evidence is still unsupported here.",
+    "The judge may be sensitive to prompt order, context length and language; repeat-run variance was not measured.",
+    "The 30 queries are English; Chinese and mixed-language judging are not evaluated."
+  ],
+  "gold_usage": {
+    "used_for_retrieval": false,
+    "gold_response_used_for_scoring": false,
+    "reason": "Context Relevance and Faithfulness use only the question, the answer and the evidence actually supplied to the answer model."
+  },
+  "commands": [
+    "python scripts/evaluate_judge.py --provider mock --judge-provider mock --limit 3 --output-dir reports/judge-smoke"
+  ],
+  "integrity": {
+    "rag_artifact_sha256": "fb6c71731383b5a4f04db77eddeeaabe8f747ebd2a4afed9ec00107ce0b9b6b6",
+    "rag_status": "PARTIAL",
+    "rag_generated_at": "2026-10-20T05:22:00.568502+00:00",
+    "counts_before": {
+      "documents": 150,
+      "chunks": 578,
+      "distinct_chunk_docs": 150,
+      "strategy_chunks": 150,
+      "strategy_docs": 150
+    },
+    "counts_after": {
+      "documents": 150,
+      "chunks": 578,
+      "distinct_chunk_docs": 150,
+      "strategy_chunks": 150,
+      "strategy_docs": 150
+    },
+    "hashes_after": {
+      "kb_documents.json": "7d230e97cbf76d2ca64382e7c0278c3b24bbe27b8a8904abc9553b45a230057d",
+      "eval_queries.json": "739bd308a90e72437ccbffca658ca950f6a069f2986040cb729694a878d9bbef"
+    },
+    "missing_gold_docs_after": [],
+    "data_integrity_ok": true
+  }
+}

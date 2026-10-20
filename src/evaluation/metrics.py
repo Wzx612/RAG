@@ -1,8 +1,9 @@
 """Retrieval metrics.
 
-Pure functions: ``recall_at_k``, ``precision_at_k``, ``ndcg_at_k`` and
-``percentile`` are implemented here. MRR and Hit@1 remain inline in the hybrid
-benchmark because they depend on its document-level arm record shape.
+Pure functions: ``recall_at_k``, ``precision_at_k``, ``ndcg_at_k``, MRR,
+Hit@K, ``percentile`` and ``latency_summary`` are implemented here. Benchmark
+modules aggregate their own arm records, but the definitions they share live in
+this module so the numbers cannot drift between reports.
 
 Golden results in, floats out. No I/O, no DB.
 """
@@ -10,6 +11,7 @@ Golden results in, floats out. No I/O, no DB.
 from __future__ import annotations
 
 import math
+import statistics
 from collections.abc import Sequence
 
 LABELS_EXHAUSTIVE = False
@@ -140,6 +142,108 @@ def ndcg_at_k(retrieved: Sequence[str], relevant: Sequence[str], k: int) -> floa
     ideal_hits = min(len(gold), k)
     idcg = sum(1.0 / math.log2(rank + 1) for rank in range(1, ideal_hits + 1))
     return dcg / idcg if idcg else 0.0
+
+
+def dedupe_in_order(values: Sequence[str]) -> list[str]:
+    """Collapse duplicate ids while keeping their first (best) rank.
+
+    The benchmarks score document-level ranking, so a query that returns three
+    chunks of the same document must occupy one effective rank.
+    """
+    return list(dict.fromkeys(values))
+
+
+def first_relevant_rank(
+    retrieved: Sequence[str], relevant: Sequence[str], k: int
+) -> int | None:
+    """Return the 1-based rank of the first relevant id within ``k``.
+
+    Duplicate retrieved ids are collapsed first, matching the document-level
+    ranking used elsewhere. Returns ``None`` when no relevant id is returned in
+    the cutoff, which is deliberately different from rank 0 or a fabricated hit.
+
+    Raises:
+        ValueError: ``k`` is not a positive int, or ``relevant`` is empty.
+    """
+    _validate_cutoff(k)
+    gold = set(dict.fromkeys(relevant))
+    if not gold:
+        raise ValueError("relevant must contain at least one id")
+    for rank, doc_id in enumerate(dedupe_in_order(retrieved)[:k], start=1):
+        if doc_id in gold:
+            return rank
+    return None
+
+
+def reciprocal_rank_at_k(
+    retrieved: Sequence[str], relevant: Sequence[str], k: int
+) -> float:
+    """Return ``1 / rank`` of the first relevant id, or ``0.0`` if none.
+
+    This is the per-query term of MRR; ``0.0`` records a miss and never a
+    fabricated rank.
+    """
+    rank = first_relevant_rank(retrieved, relevant, k)
+    return 0.0 if rank is None else 1.0 / rank
+
+
+def mrr_at_k(
+    rankings: Sequence[tuple[Sequence[str], Sequence[str]]], k: int
+) -> float:
+    """Return mean reciprocal rank over ``(retrieved, relevant)`` pairs.
+
+    Args:
+        rankings: One ``(retrieved ids, relevant ids)`` pair per evaluated
+            query. Every pair must have at least one relevant id.
+        k: Positive cutoff.
+
+    Returns:
+        The arithmetic mean of the per-query reciprocal ranks, or ``0.0`` when
+        ``rankings`` is empty. An empty input is reported by the caller as a
+        missing sample, not as a perfect score.
+
+    Raises:
+        ValueError: ``k`` is invalid or any pair has no relevant id.
+    """
+    _validate_cutoff(k)
+    values = [
+        reciprocal_rank_at_k(retrieved, relevant, k)
+        for retrieved, relevant in rankings
+    ]
+    return statistics.fmean(values) if values else 0.0
+
+
+def hit_at_k(retrieved: Sequence[str], relevant: Sequence[str], k: int) -> bool:
+    """Return whether at least one relevant id appears within the first ``k``."""
+    return first_relevant_rank(retrieved, relevant, k) is not None
+
+
+def latency_summary(samples: Sequence[float]) -> dict[str, float | int | None]:
+    """Return count, min, nearest-rank P50/P95/P99, max and mean.
+
+    Empty input yields a row of ``None`` values rather than zeros, so a report
+    cannot present an unmeasured latency as a fast one.
+    """
+    if not samples:
+        return {
+            "n": 0,
+            "min": None,
+            "p50": None,
+            "p95": None,
+            "p99": None,
+            "max": None,
+            "mean": None,
+        }
+    values = [float(value) for value in samples]
+    return {
+        "n": len(values),
+        "min": min(values),
+        "p50": percentile(values, 50),
+        "p95": percentile(values, 95),
+        "p99": percentile(values, 99),
+        "max": max(values),
+        "mean": statistics.fmean(values),
+    }
 
 
 def percentile(samples: Sequence[float], p: float) -> float:

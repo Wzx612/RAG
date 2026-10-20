@@ -182,14 +182,17 @@ def test_a_query_plan_uses_the_hnsw_index(conn: psycopg.Connection) -> None:
 
     At 150 rows the planner picks a sequential scan on cost, and a sequential
     scan ignores ef_search entirely -- so a sweep would measure noise. This
-    pins the shape of the query Phase 4 will run, with seqscan disabled the way
-    a benchmark must disable it for the same reason.
+    pins the shape of the query Phase 4 will run, with seqscan, bitmap scans
+    and Sort disabled the way a benchmark must disable them for the same
+    reason (a strategy btree index plus Sort is not the ANN path).
     """
     if conn.execute("SELECT count(*) FROM chunks").fetchone() == (0,):
         pytest.skip("corpus not imported -- run `make ingest` first")
 
     with conn.transaction():
         conn.execute("SET LOCAL enable_seqscan = off")
+        conn.execute("SET LOCAL enable_bitmapscan = off")
+        conn.execute("SET LOCAL enable_sort = off")
         plan = "\n".join(
             row[0]
             for row in conn.execute(
@@ -211,7 +214,9 @@ def test_a_real_vector_query_returns_the_expected_neighbours(
 
     DOC-0001 is the balance-transfer rule for Apex Platinum; its nearest
     neighbours are the same rule written for the other three tiers, which makes
-    them a stable expectation for any correct cosine search.
+    them a stable expectation for any correct cosine search. Both sides of the
+    comparison are scoped to ``chunk_strategy = 'document'``: the table also
+    holds fixed_window and structured chunks whose chunk_ids repeat DOC-0001.
     """
     if conn.execute("SELECT count(*) FROM chunks").fetchone() == (0,):
         pytest.skip("corpus not imported -- run `make ingest` first")
@@ -223,8 +228,11 @@ def test_a_real_vector_query_returns_the_expected_neighbours(
         rows = conn.execute(
             """
             SELECT c.doc_id
-            FROM chunks c, (SELECT embedding FROM chunks WHERE chunk_id = 'DOC-0001') p
-            WHERE c.chunk_id <> 'DOC-0001'
+            FROM chunks c,
+                 (SELECT embedding FROM chunks
+                  WHERE chunk_id = 'DOC-0001' AND chunk_strategy = 'document') p
+            WHERE c.chunk_strategy = 'document'
+              AND c.chunk_id <> 'DOC-0001'
             ORDER BY c.embedding <=> p.embedding
             LIMIT 3
             """

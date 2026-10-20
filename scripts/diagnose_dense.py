@@ -61,6 +61,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--top-k", type=int, default=10)
     parser.add_argument("--ef-search", type=int, default=40)
     parser.add_argument(
+        "--chunk-strategy",
+        choices=("document", "fixed_window", "structured"),
+        default="document",
+        help="Chunking strategy the diagnostic is scoped to",
+    )
+    parser.add_argument(
         "--force-hnsw",
         action="store_true",
         help="also run retrieval under SET LOCAL enable_seqscan=off (diagnosis only)",
@@ -106,6 +112,7 @@ def _explain(
     vector: list[float],
     top_k: int,
     ef_value: int,
+    chunk_strategy: str = "document",
     *,
     force: bool,
 ) -> str:
@@ -124,14 +131,14 @@ def _explain(
                 with ef_search(conn, ef_value):
                     rows = conn.execute(
                         "EXPLAIN (ANALYZE, BUFFERS) " + DENSE_SEARCH_SQL,
-                        (Vector(vector), top_k),
+                        (Vector(vector), chunk_strategy, top_k),
                         prepare=False,
                     ).fetchall()
         else:
             with ef_search(conn, ef_value):
                 rows = conn.execute(
                     "EXPLAIN (ANALYZE, BUFFERS) " + DENSE_SEARCH_SQL,
-                    (Vector(vector), top_k),
+                    (Vector(vector), chunk_strategy, top_k),
                     prepare=False,
                 ).fetchall()
     finally:
@@ -161,9 +168,16 @@ def main(argv: list[str] | None = None) -> int:
     """Run the diagnostic and return a process exit code."""
     args = _parse_args(argv)
     query_id, query = _load_query(args)
-    config = DenseConfig(top_n=args.top_k, ef_search=args.ef_search)
+    config = DenseConfig(
+        top_n=args.top_k,
+        ef_search=args.ef_search,
+        chunk_strategy=args.chunk_strategy,
+    )
 
-    print(f"query_id={query_id} top_k={args.top_k} ef_search={args.ef_search}")
+    print(
+        f"query_id={query_id} top_k={args.top_k} ef_search={args.ef_search} "
+        f"chunk_strategy={args.chunk_strategy}"
+    )
     print(f"query={query!r}")
 
     embedder = SentenceTransformerEmbedder()
@@ -182,11 +196,25 @@ def main(argv: list[str] | None = None) -> int:
     with connection() as conn:
         _print_plan(
             "natural plan (no planner forcing)",
-            _explain(conn, vector, args.top_k, args.ef_search, force=False),
+            _explain(
+                conn,
+                vector,
+                args.top_k,
+                args.ef_search,
+                args.chunk_strategy,
+                force=False,
+            ),
         )
         _print_plan(
             "forced plan (SET LOCAL enable_seqscan=off, diagnosis only)",
-            _explain(conn, vector, args.top_k, args.ef_search, force=True),
+            _explain(
+                conn,
+                vector,
+                args.top_k,
+                args.ef_search,
+                args.chunk_strategy,
+                force=True,
+            ),
         )
         assert current_ef_search(conn) == 40, "ef_search leaked out of its transaction"
 

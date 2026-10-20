@@ -54,6 +54,7 @@ class HistoricalRRFRetriever:
         path: Path = DEFAULT_HISTORICAL,
         *,
         candidates: int = 10,
+        chunk_strategy: str = "document",
         connection_factory: ConnectionFactory | None = None,
     ) -> None:
         """Load and validate the artifact; do not query the database yet.
@@ -61,10 +62,20 @@ class HistoricalRRFRetriever:
         Args:
             path: Accepted Phase 6B JSON artifact.
             candidates: Maximum pool size taken from each query's RRF list.
+            chunk_strategy: Retrieval scope the replayed artifact must have
+                been produced with. Defaults to ``document``, which is what
+                every historical artifact used.
             connection_factory: Injectable context manager for tests.
+
+        Raises:
+            ValueError: invalid candidates, an artifact produced under another
+                chunk strategy, or a structurally invalid artifact.
         """
         if candidates < 1:
             raise ValueError("candidates must be positive")
+        if chunk_strategy not in ("document", "fixed_window", "structured"):
+            raise ValueError(f"unsupported chunk_strategy {chunk_strategy!r}")
+        self._chunk_strategy = chunk_strategy
         self._path = path
         self._candidates = candidates
         factory = connection_factory
@@ -74,7 +85,7 @@ class HistoricalRRFRetriever:
             factory = cast(ConnectionFactory, default_connection)
 
         self._connection_factory: ConnectionFactory = factory
-        self._records = _load_records(path)
+        self._records = _load_records(path, chunk_strategy)
         self._by_query = {
             str(record["query"]).strip(): record for record in self._records
         }
@@ -117,6 +128,16 @@ class HistoricalRRFRetriever:
         if not isinstance(pool, list) or not pool:
             raise RetrievalError("historical RRF pool is empty")
         selected = pool[: self._candidates]
+        wrong_scope = [
+            str(item.get("chunk_id"))
+            for item in selected
+            if str(item.get("chunk_strategy", "document")) != self._chunk_strategy
+        ]
+        if wrong_scope:
+            raise RetrievalError(
+                f"historical RRF pool contains chunks outside the "
+                f"{self._chunk_strategy!r} scope: {wrong_scope}"
+            )
         identities = [
             (str(item["chunk_strategy"]), str(item["chunk_id"])) for item in selected
         ]
@@ -159,8 +180,10 @@ class HistoricalRRFRetriever:
         return hits
 
 
-def _load_records(path: Path) -> list[dict[str, Any]]:
-    """Read and minimally validate the accepted artifact."""
+def _load_records(
+    path: Path, chunk_strategy: str = "document"
+) -> list[dict[str, Any]]:
+    """Read, validate and scope-check the accepted artifact."""
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except OSError as exc:
@@ -169,6 +192,17 @@ def _load_records(path: Path) -> list[dict[str, Any]]:
         raise ValueError(f"{path} is not valid JSON: {exc}") from exc
     if not isinstance(payload, dict):
         raise ValueError(f"{path} must hold a JSON object")
+    parameters = payload.get("parameters")
+    declared = "document"
+    if parameters is not None and not isinstance(parameters, Mapping):
+        raise ValueError(f"{path} parameters must be an object")
+    if isinstance(parameters, Mapping):
+        declared = str(parameters.get("chunk_strategy", "document"))
+    if declared != chunk_strategy:
+        raise ValueError(
+            f"{path} was produced with chunk_strategy={declared!r}, but the "
+            f"retriever is scoped to {chunk_strategy!r}"
+        )
     records = payload.get("per_query")
     if not isinstance(records, list) or not records:
         raise ValueError(f"{path} has no per_query records")
@@ -178,6 +212,18 @@ def _load_records(path: Path) -> list[dict[str, Any]]:
         arms = record.get("arms")
         if not isinstance(arms, dict) or not isinstance(arms.get("rrf"), dict):
             raise ValueError(f"{path} per_query[{position}] has no RRF arm")
+        hits = arms["rrf"].get("hits")
+        if isinstance(hits, list):
+            for hit in hits:
+                if not isinstance(hit, Mapping):
+                    continue
+                hit_strategy = str(hit.get("chunk_strategy", "document"))
+                if hit_strategy != chunk_strategy:
+                    raise ValueError(
+                        f"{path} per_query[{position}] contains chunk "
+                        f"{hit.get('chunk_id')!r} with chunk_strategy="
+                        f"{hit_strategy!r}, expected {chunk_strategy!r}"
+                    )
     return records
 
 

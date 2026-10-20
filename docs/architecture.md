@@ -6,10 +6,24 @@
 > **阶段 ⑩ 校正说明（2026-10-19）**：本文保留阶段 ① 的设计内容，但以下设计目标
 > 与当前实现不同，实际状态以 `README.md` 和 `docs/roadmap.md` 为准：
 > `reports/results.md`、`reports/figures/*.png`、`make report`、`make pipeline`、
-> `cli.report` / `cli.evaluate` 均未实现；实际报告是
-> `reports/{dense,sparse,hybrid,rerank,rag}_benchmark.md` / `.json`，由
-> `scripts/*_benchmark.py` 生成。阶段编号已统一为 **⑨ README / roadmap 定稿**、
-> **⑩ 项目最终整合与 GitHub 提交准备**；FastAPI 仍未实现。
+> `cli.report` / `cli.evaluate` 在 2026-10-20 之前均未实现；本轮已写入
+> `cli.report` / `cli.evaluate` / `make report` / `make pipeline`。这些入口其后已在
+> 容器内实际执行：`scripts/report.py` 生成 `reports/final_report.md` 与
+> `reports/figures/*.png`（5 张，`Report status: PASS`）。五份历史报告
+> `reports/{dense,sparse,hybrid,rerank,rag}_benchmark.md` / `.json` 仍由
+> `scripts/*_benchmark.py` 生成并保持原样。阶段编号已统一为 **⑨ README / roadmap 定稿**、
+> **⑩ 项目最终整合与 GitHub 提交准备**、**⑪ P0+P1+P2 迭代**；FastAPI 已写入
+> `src/api`，`api` 服务已在容器内启动并通过 `/healthz` 与
+> `/acceptance/api/summary` 请求。分块策略已由设计期的
+> `contextual` 调整为 `structured`（`contextual` 退役，只保留迁移提示）；依赖以
+> `pyproject.toml` 的声明为准，宿主实测版本与该声明存在漂移（见 README
+> “依赖、版本与复现性”），本文第 8 节的旧版本陈述不构成安装验证。
+>
+> **2026-10-20 增补**：P0+P1+P2 迭代已写入统一评测层（`evaluation/benchmark.py`、
+> `artifacts.py`）、报告层（`evaluation/report.py`、`scripts/report.py`）、arm
+> 注册表（`retrieval/registry.py`）、索引与分块实验、完整 CLI 与只读 FastAPI
+> （`src/api`）。这些模块其后已在容器内执行并留下 artifact；本文正文仍是设计目标，
+> 实际执行状态以 README 的“本轮迭代交付状态”和 `docs/roadmap.md` 第 10 节为准。
 
 ---
 
@@ -70,16 +84,30 @@
 │   │   ├── fusion.py                # RRF / 加权
 │   │   ├── reranker.py              # Cross-Encoder
 │   │   ├── pipeline.py              # 组合成检索策略
-│   │   └── registry.py              # Config -> Retriever 工厂
+│   │   └── registry.py              # 评测 arm 注册表（名称 -> 构造器 + 参数）
+│   │
+│   ├── api/                         # 只读 HTTP 传输层（2026-10-20 新增）
+│   │   ├── app.py                   #   /healthz、/readyz、/answer、/api/v1/search
+│   │   ├── acceptance.py            #   /acceptance/* 只读 artifact 投影
+│   │   └── schema.py                #   请求/响应投影（不含 prompt / raw payload）
 │   │
 │   ├── evaluation/
 │   │   ├── metrics.py               # 纯函数指标
-│   │   ├── benchmark.py             # 编排
-│   │   └── report.py                # 渲染
+│   │   ├── benchmark.py             # 统一编排与 schema
+│   │   ├── artifacts.py             # 覆盖保护、哈希
+│   │   ├── report.py                # artifact -> Markdown + 图（不重算指标）
+│   │   ├── index_benchmark.py       # HNSW / IVFFlat 扫描（2026-10-20 新增）
+│   │   ├── chunking_benchmark.py    # 分块策略对比（2026-10-20 新增）
+│   │   └── fusion_benchmark.py      # RRF 敏感性（2026-10-20 新增）
 │   │
 │   └── utils/
 │       ├── logger.py
 │       └── timing.py                # 只采集，不算分位数
+│
+├── web/acceptance/                  # 无构建步骤的静态验收页（2026-10-20 新增）
+│   ├── index.html                   #   tab 结构、CSP meta、只读声明
+│   ├── styles.css                   #   同源样式，支持深色与窄屏
+│   └── app.js                       #   fetch 两个 GET API，只用 textContent
 │
 ├── tests/
 │   ├── conftest.py
@@ -94,7 +122,10 @@
 │   ├── hybrid_benchmark.md / .json  # 实际交付：阶段 ⑥
 │   ├── rerank_benchmark.md / .json  # 实际交付：阶段 ⑦
 │   ├── rag_benchmark.md / .json     # 实际交付：阶段 ⑧
-│   └── figures/                     # 预留；当前为空
+│   ├── unified/                     # 统一评测 artifact（目标路径；尚未生成）
+│   ├── container/                   # 容器验证日志（目标路径；尚未生成）
+│   ├── figures/                     # 报告图（目标路径；当前为空）
+│   └── final_report.md              # 汇总报告（目标产物；尚未生成）
 │
 ├── docs/
 │   ├── architecture.md              # 本文档（阶段 ① 设计稿）
@@ -121,7 +152,7 @@
 | ~~删除 `scripts/`~~ → **恢复入口脚本** | 阶段 ① 删掉了 `scripts/`，理由是它只能是对 `cli.py` 的薄包装。阶段 ③ 先恢复了 `scripts/ingest.py`（6 行转发，不含逻辑）。阶段 ④–⑧ 实际使用 `scripts/benchmark_*.py` 与 `scripts/ask_rag.py` 作为评测/问答入口；它们直接编排 benchmark 模块，不是 `cli.py` 的转发。`Makefile` 的 `ingest` 仍走 `python -m src.cli ingest`。 |
 | **新增 `src/db.py`** | `indexer`（写）与 `dense`/`sparse`（读）都要连接。放在任一侧都会造成不对称依赖，独立出来最干净。 |
 | **新增 `src/retrieval/base.py` 与 `registry.py`** | 这是 5 个实验能"不写死"的关键，见 §6。 |
-| **不加 `notebooks/`** | 实际报告由 `scripts/*_benchmark.py` 生成 Markdown/JSON；`make report` 尚未实现。Notebook 依赖手工执行顺序，与"可复现"优先级冲突。 |
+| **不加 `notebooks/`** | 实际报告由 `scripts/*_benchmark.py` 生成 Markdown/JSON；`make report` 已写入、尚未执行验证。Notebook 依赖手工执行顺序，与"可复现"优先级冲突。 |
 
 ---
 
@@ -129,17 +160,17 @@
 
 | 技术领域 | 最终方案 | 备选方案 | 选择原因 |
 |---|---|---|---|
-| Language | **Python 3.12**（容器内）<br>本地 ≥3.11 | 3.11 / 3.13 / 3.14 | 3.11 是题目下限；3.12 的 wheel 覆盖最完整。**本机 3.14.3 也能跑**（设计时核实 torch 2.14.1 提供 cp314 wheel；实际评测环境的版本存在漂移，见 `docs/roadmap.md` §4.5），但容器固定 3.12 以消除环境漂移。 |
+| Language | **Python 3.12**（容器内）<br>本地 ≥3.12 | 3.12 / 3.13 / 3.14 | 项目声明、Ruff、Mypy 与镜像统一为 3.12；3.12 的 wheel 覆盖最完整。**本机 3.14.3 也能跑**（设计时核实 torch 2.14.1 提供 cp314 wheel；实际评测环境的版本存在漂移，见 `docs/roadmap.md` §4.5），但容器固定 3.12 以消除环境漂移。 |
 | Database | **PostgreSQL 16** (`pgvector/pgvector:pg16`) | SQLite / 独立向量库 | 题目指定；且 FTS 与向量检索同库，省掉一整套同步逻辑。 |
 | Vector | **pgvector** | FAISS / Qdrant | 题目指定。 |
-| Vector Index | **HNSW**（余弦） | IVFFlat | IVFFlat 需要足够数据量才能训练出有意义的聚类；150 行下几乎没有可训练的分布，且需要预先指定 `lists`。HNSW 无需训练、增量友好、召回更稳。**IVFFlat 原计划作为对照实验，但未执行**。 |
+| Vector Index | **HNSW**（余弦） | IVFFlat | IVFFlat 需要足够数据量才能训练出有意义的聚类；150 行下几乎没有可训练的分布，且需要预先指定 `lists`。HNSW 无需训练、增量友好、召回更稳。**IVFFlat 对照实验的扫描代码已写入（`evaluation/index_benchmark.py`），尚未执行**。 |
 | Embedding | **`BAAI/bge-large-en-v1.5`**（1024 维，本地） | `text-embedding-3-small`（API）<br>`all-MiniLM-L6-v2`（384 维） | 见下方说明。 |
 | Sparse | **PostgreSQL FTS**（`tsvector` + GIN + `ts_rank_cd`） | Elasticsearch / BM25 库 | 见下方说明。 |
 | Fusion | **RRF**（k=60） | 加权得分归一化 | 见下方说明。 |
 | Reranker | **`BAAI/bge-reranker-base`**（本地 Cross-Encoder） | `cross-encoder/ms-marco-MiniLM-L-6-v2`<br>Cohere Rerank（API） | 见下方说明。 |
 | Evaluation | **纯 Python + numpy** | ranx / pytrec_eval | 4 个指标 + 3 个延迟分位数，自己实现约 60 行，且**可被单元测试逐一验证**。引入评测库反而增加依赖和黑盒。 |
 | Container | **Docker Compose**（db + app） | 裸机安装 | 题目要求"一键运行"；且见 §8 环境决策。 |
-| API | 后续阶段（FastAPI，未实现） | — | 加分项，不阻塞主线。当前 `pyproject.toml` 已预留 `[api]` 可选依赖组。阶段 ⑧ 交付的是进程内 RAG 问答链路与 CLI，不是 HTTP 服务；`src/api` 不存在。 |
+| API | **FastAPI**（`src/api`，只读） | — | 复用 `build_pipeline()`，不复制检索逻辑；`/answer` 只投影 answer / citations / evidence，`/api/v1/search` 只返回排序 chunk 并复用同一 retriever（每个进程一组模型）；响应不含 prompt 与 provider 原始输出；模型懒加载，`/readyz` 只检查数据库。Swagger 由 FastAPI 生成（`/docs`、`/openapi.json`）。`[api]` extra 与 compose `api` profile 已配置。`api` 服务已在容器内启动；`/healthz`、`/acceptance/api/summary`、`/api/v1/search` 与 `/docs` 已实际请求，`/readyz`、`/answer` 与浏览器渲染尚未验证。 |
 
 ### Embedding：为什么选本地 bge-large，而不是题目示例里的 OpenAI
 
@@ -211,7 +242,7 @@
 | `ingestion/loader.py` | 读 JSON，校验，抽 `policy_code` | `data/kb_documents.json` | `list[Document]` | `cli.ingest` | ③✅ |
 | `ingestion/chunker.py` | 按策略切块 | `Document` | `list[Chunk]` | `cli.ingest` | ③✅（仅 `document`；另两种归 ⑤） |
 | `ingestion/embedder.py` | 文本 → 向量；区分 query/document 前缀 | `list[str]` | `list[list[float]]` | `cli.ingest`, `pipeline` | ③✅ |
-| `ingestion/indexer.py` | 批量写入；建 HNSW 索引 | `list[Chunk]` + 向量 | 数据库行 | `cli.ingest`, `cli.index` | ③✅ 写入 / ④ 索引重建 |
+| `ingestion/indexer.py` | 批量写入；HNSW / IVFFlat shadow 索引管理（未执行 DDL） | `list[Chunk]` + 向量 | 数据库行 / `IndexStats` | `cli.ingest`（写入）；`cli.index build/list/drop` | ③✅ 写入 / 索引管理已实现、未运行 |
 
 > 关于 `embedder` 的返回类型：阶段 ① 这里写的是 `np.ndarray`，实际实现返回
 > `list[list[float]]`。向量越过模块边界后就只是一串浮点数，让 numpy 出现在接口上
@@ -234,9 +265,10 @@
 
 ### 评测链路
 
-> 下表保留阶段 ① 的设计职责。实际入口是 `scripts/benchmark_*.py`（直接调用
-> 具体 benchmark 模块并写 `reports/*_benchmark.md` / `.json`）；`cli.evaluate`
-> 与 `cli.report` 未实现。
+> 下表保留阶段 ① 的设计职责。历史报告的实际入口是 `scripts/benchmark_*.py`；
+> 2026-10-20 新增的统一入口是 `scripts/benchmark_{retrieval,index,chunking,fusion}.py`
+> 与 `scripts/benchmark_all.py`，由 `cli.benchmark` 转发。`cli.evaluate` 读取 artifact、
+> `cli.report` 渲染报告，二者都**不重算指标**；它们与新增脚本均未执行验证。
 
 | 模块 | 做什么 | 输入 | 输出 | 被谁调用 | 阶段 |
 |---|---|---|---|---|---|
@@ -266,11 +298,58 @@
 HTTP 交互，不读数据库、不知道检索存在；`pipeline.py` 是唯一把两者串起来的地方。
 生成模型、Embedding 模型、Reranker 是三个独立组件，不能互相替代。
 
+### LLM-as-a-Judge（2026-10-20 新增）
+
+Judge 只消费 RAG 已经产出的结构化结果。它不重新检索、不修改答案、不读取
+`gold_response`，因此同一份 RAG artifact 可以被重复评分，且评分成本与生成成本解耦。
+
+| 模块 | 做什么 | 输入 | 输出 | 被谁调用 | 阶段 |
+|---|---|---|---|---|---|
+| `schema/judge.py` | Context Relevance / Faithfulness 结果、claim、错误与 artifact 契约 | — | Pydantic 模型 | `evaluation/judge*` | 新增 |
+| `evaluation/judge_prompts.py` | 两套 rubric、untrusted-data 分隔符、版本号与 prompt SHA256 | query + `JudgeContext` (+ answer) | messages、hash | `evaluation/judge.py` | 新增 |
+| `evaluation/judge.py` | 调用 Provider、解析 JSON、校验分数/标签/claim；失败返回 `score=None` 与稳定 status | messages | `ContextRelevanceResult` / `FaithfulnessResult` | `judge_evaluation` | 新增 |
+| `evaluation/judge_evaluation.py` | 批量评分、失败隔离、均值/中位数/分布、状态判定、JSONL/JSON/Markdown | RAG artifact + Judge | judge artifact | `scripts/evaluate_judge.py` | 新增 |
+| `scripts/evaluate_judge.py` | 参数解析、真实调用的 key/网络门禁、写盘保护 | CLI | `reports/judge/*` | `make judge` / `src.cli` | 新增 |
+
+**数据流**：`RAGPipeline` → `run_rag_benchmark()`（或 `--rag-artifact`）→
+`per_query[].evidence`（`E1..En`）与 `answer` → 两个 Judge prompt → 逐条结果 →
+JSONL + summary + Markdown → `src/evaluation/report.py` 的 optional `judge` 章节与
+`judge_distribution.png`。
+
+**边界**：`judge.py` 不知道 RAG artifact 或文件布局；`judge_evaluation.py` 不构造
+prompt、不解析模型文本；`report.py` 只读已落盘的 summary，不重新评分。失败请求
+（超时、限流、非法 JSON、未知标签）只影响该条 Query，绝不折算成 0 分；Mock Judge
+固定 `is_real=False`，其运行只能是 `PARTIAL`。
+
+### HTTP 传输层（2026-10-20 新增）
+
+| 模块 | 做什么 | 输入 | 输出 | 被谁调用 | 阶段 |
+|---|---|---|---|---|---|
+| `api/schema.py` | 请求校验（1–2000 字符，`extra="forbid"`）与响应投影；含 `SearchRequest` / `SearchResult` / `SearchResponse` | JSON body | Pydantic 模型 | `api/app.py` | ⑪ |
+| `api/app.py` | 进程内缓存一个 `RAGPipeline`；状态到 HTTP 的映射；`/api/v1/search` 复用 pipeline 的 retriever | request | `JSONResponse` | uvicorn | ⑪ |
+| `api/acceptance.py` | 固定白名单加载 artifact，投影为只读 summary 与逐 Query Judge 页 | 已落盘 JSON | `JSONResponse` / `FileResponse` | `api/app.py` | ⑬ |
+| `web/acceptance/*` | 原生 HTML/CSS/JS 看板；fetch 两个 GET API，`textContent` 渲染 | summary JSON | 页面 | 浏览器 | ⑬ |
+
+**边界**：API 只是传输层。它不构造检索参数（Top-K 是服务端配置，不接受客户端输入），
+不重试 Provider（`RAGPipeline` 已有有界重试），不返回 `context_text` 或
+`raw_response`。`/api/v1/search` 是例外的最小参数面：调用方只能给 `query` 与可选
+`top_k`，且 `top_k` 不得超过服务端候选池；该端点不调用 LLM。未列出的 `RAGStatus`
+映射为 500；`/readyz` 失败返回 503 但不会因为模型未加载而报错——模型在首次
+`/answer` 或 `/api/v1/search` 时懒加载。
+
+**验收数据流**：五份固定 artifact → `evaluation/report.load_artifacts()` /
+`report_status()` → `api/acceptance.build_summary()`（只选字段，不重算）→
+`GET /acceptance/api/summary`；`judge_summary.per_query[]` → 逐条投影（剔除
+`raw_response`、usage、answer/context/prompt 哈希、prompt 文本、endpoint；
+artifact 文件 SHA256 与数据集哈希保留用于追溯）→
+`GET /acceptance/api/judge/queries`。路由只注册 GET，不查数据库、不加载模型；
+artifact 存在但损坏时 fail-closed 返回 503，不展示部分数字。
+
 ---
 
 ## 6. 核心数据流
 
-### 写入链路（实际由 `make ingest` 触发；`make pipeline` 未实现）
+### 写入链路（实际由 `make ingest` 触发；`make pipeline` 已实现但未执行）
 
 ```
 data/kb_documents.json
@@ -287,8 +366,8 @@ data/kb_documents.json
         ▼  indexer.upsert_corpus(documents, chunks, vectors)
    PostgreSQL: documents + chunks     ← 单事务；chunks.tsv 由 GENERATED 列自动维护
         │
-        ▼  indexer.build_hnsw(m, ef_construction)
-   HNSW 索引就绪
+        ▼  indexer.build_hnsw_index(m=..., ef_construction=...)   # 显式调用；ingest 不会自动建
+   shadow HNSW 索引（chunks_embedding_hnsw_vNNN）
 ```
 
 ### 查询链路
@@ -385,15 +464,17 @@ tsv TSVECTOR GENERATED ALWAYS AS (
 
 > 此处推翻了阶段 ① 的原设计（原本 HNSW 完全不在 `init.sql` 中）。理由是阶段 ② 要求"`docker compose up` 之后 schema 必须自证完整"——一个建不出索引的 schema 是不完整的，而且 HNSW 参数（`m = 16`、`ef_construction = 64`）与 `DenseConfig` 的默认值本就一致。
 >
-> 两个索引不会打架：`indexer.py` 在实验 4 里 `DROP INDEX IF EXISTS` 后按扫描到的参数重建，并从那一刻起拥有它。`init.sql` 只在数据目录为空时执行一次，此后不再介入。
+> 两个索引不会打架：`indexer.py` 现在提供显式的 `build_hnsw_index()` / `build_ivfflat_index()`，默认创建带版本号的 shadow 索引（`chunks_embedding_hnsw_vNNN`），不删除也不替换 `chunks_embedding_hnsw_idx`；`drop_index()` 只有在显式调用并传入 `allow_production=True` 时才能删除引导索引。`ingest` 不会隐式重建索引。`init.sql` 只在数据目录为空时执行一次，此后不再介入。
 >
-> 参数不写死在 SQL 里：`docker/init.sh` 用 psql 的 `:variable` 把 `APEX_HNSW_M` / `APEX_HNSW_EF_CONSTRUCTION` 注入进去。改这两个值需要 `make reset`（初始化脚本只在空数据目录上跑）。
+> 参数不写死在 SQL 里：`docker/init.sh` 用 psql 的 `:variable` 把 `APEX_HNSW_M` / `APEX_HNSW_EF_CONSTRUCTION` 注入进去。改这两个值只影响新初始化的数据目录；已有数据库应使用 shadow 索引构建，而不是 `make reset`。
+>
+> 上述索引函数只有纯单元测试覆盖命名与参数校验；**尚未执行任何建索引或删索引 DDL**。
 
 **④ `chunks.embedding` 是 `NOT NULL`。** 阶段 ② 的指令建议允许 `NULL`，这里没有采纳：pgvector 会把 `NULL` 向量的行**静默排除**在 HNSW 索引之外，于是这样的行对顺序扫描可见、对 ANN 检索不可见——一个没有任何测试能发现的 Recall@K 偏差。把这个状态变得不可表达，比事后检测它便宜得多。
 
 **⑤ `documents` 表没有 `embedding` 列，这是刻意的。**
 
-阶段 ③ 的指令写的是"写入 `documents.embedding` 字段"，但那张表确实没有这一列，向量在 `chunks` 上。这不是遗漏，而是阶段 ① 的双表设计：分块策略是**实验变量**（实验 5 要对比 document / fixed_window / contextual 三种），把向量挂在 `documents` 上会让一篇文档只能有一个向量，实验 5 直接无法进行。
+阶段 ③ 的指令写的是"写入 `documents.embedding` 字段"，但那张表确实没有这一列，向量在 `chunks` 上。这不是遗漏，而是阶段 ① 的双表设计：分块策略是**实验变量**（实验 5 要对比 document / fixed_window / structured 三种；设计期写的 `contextual` 已退役），把向量挂在 `documents` 上会让一篇文档只能有一个向量，实验 5 直接无法进行。
 
 代价是阶段 ③ 的验收 SQL 需要换个写法。二者等价：
 
@@ -410,7 +491,10 @@ SELECT count(*) FROM chunks WHERE chunk_strategy = 'document' AND embedding IS N
 
 ## 8. 环境决策：容器是唯一契约
 
-**已核实**：本机 Python 3.14.3，torch 2.14.1 提供 `cp314` wheel，本地跑得动。**但所有 Makefile 目标仍统一走 `docker compose run`。**
+**已核实**：本机 Python 3.14.3。宿主实测 torch 为 `2.13.0+cpu`；`pyproject.toml`
+声明 `2.14.1`，该声明版本尚未在本机安装与回归，不能据此写成"已核实可运行"。
+**除 `clean` 外，Makefile 目标仍统一走 `docker compose run`**；`clean` 只清理宿主
+Python 缓存，避免为删除缓存而启动数据库。
 
 理由是消除"在我机器上能跑"这一类问题：评审者只需有 Docker，宿主 Python 版本、系统库、CUDA 有没有，全部无关。宿主 `python -m venv` 仅作为开发便利，不是交付契约。
 
@@ -428,9 +512,16 @@ class Retriever(Protocol):
     def retrieve(self, query: str, top_k: int) -> list[SearchHit]: ...
 ```
 
-> **实现状态（阶段 ⑦-B）**：实验 1（Dense）、实验 3（RRF）、候选并集基线与
-> 实验 4（Reranker）已实测；实验 2（加权）与实验 5（分块策略对比）仍未实现。
-> 下表是设计目标，不是当前全部可运行的实验清单。
+> **实现状态（2026-10-20 更新）**：实验 1（Dense）、实验 3（RRF）、候选并集
+> 基线与实验 4（Reranker）已实测；实验 5（分块策略对比）已在容器内完成：三种策略
+> 分别入库（`document=150`、`fixed_window=267`、`structured=161`，合计 578 chunks），
+> 30 条 Query × 3 策略 × 4 arms（含 `rrf_rerank`）全部 PASS；结果见
+> `reports/unified/chunking_benchmark.json` 与 `chunking_benchmark_rerank.json`。
+> 实验 2（加权融合）仍未实现。
+> 新增的 `retrieval/registry.py` 把 6 个评测臂（dense / sparse_or / sparse_and /
+> union / rrf / rrf_rerank）收敛为一个注册表，`evaluation/benchmark.py` 只负责运行与
+> 记录，因此新增实验是新增注册项，而不是分支逻辑。下表是设计目标，不是当前全部
+> 可运行的实验清单。
 
 五个实验**全部由组合得出，没有任何实验分支写在函数体里**：
 
@@ -440,9 +531,22 @@ class Retriever(Protocol):
 | **2. Dense + Sparse 加权** | `fusion.method="weighted"` | `HybridRetriever(dense, sparse, WeightedFusion)` |
 | **3. + RRF** | `fusion.method="rrf"` | `HybridRetriever(dense, sparse, RRFFusion)` |
 | **4. + Reranker** | `rerank.enabled=True` | `RerankedRetriever(HybridRetriever(...), CrossEncoder)` |
-| **5. Chunking 对比** | `ChunkingConfig.strategy ∈ {document, fixed_window, contextual}` | 相同 retriever × 重新入库的策略 |
+| **5. Chunking 对比** | `ChunkingConfig.strategy ∈ {document, fixed_window, structured}`（`contextual` 已退役） | 相同 retriever × 重新入库的策略；已在容器内运行（3 策略 × 4 arms，含 rerank） |
 
-实验 5 的实现方式：`chunks` 表的主键是 `(chunk_strategy, chunk_id)`，三种策略的分块**可以共存于同一张表**，检索时按 `chunk_strategy` 过滤即可。因此不需要建三套数据库，一次入库、并行对比。
+实验 5 的设计方式（**检索隔离与对比实验均已运行**）：`chunks` 表的主键是
+`(chunk_strategy, chunk_id)`，三种策略的分块**可以共存于同一张表**。`DenseConfig` /
+`SparseConfig` 带有 `chunk_strategy`（默认 `document`），Dense 与 Sparse 的 SQL 都把它
+作为绑定参数过滤，行映射器再校验一次；`Settings.retrieval_chunk_strategy` 决定 RAG
+链路的作用域，四个检索 Benchmark 脚本提供 `--chunk-strategy`。历史 RRF 重放还会校验
+artifact 的 `parameters.chunk_strategy` 与每条命中，作用域不一致即报错。因此不需要建三套
+数据库，一次入库、并行对比。已验证：578 chunks 上三种策略各自 30/30 查询完成，
+`chunking_benchmark.json`（dense / sparse_or / rrf）与
+`chunking_benchmark_rerank.json`（增加 `rrf_rerank`）均为 `status=PASS`。
+限制：所有策略共用同一个 HNSW bootstrap 索引，无法把索引大小按策略归因；
+`chunk_strategy` 过滤在 ANN 扫描之后执行，`ef_search` 较小时单策略可能返回少于 K 条
+（2026-10-20 在 `ef_search=5` 下实测：全局 Top-5 中仅 3 条属于 `document`），
+因此策略间召回差异部分来自各策略在全局索引中的占比；`candidate_k=10`；
+延迟为单进程顺序执行。
 
 **实验列表是配置，不是代码。** `registry.py` 把实验名映射到 `RetrievalConfig`，`benchmark.py` 只负责遍历——新增一个实验 = 新增一条配置，不改任何检索逻辑。
 
@@ -475,3 +579,44 @@ class Retriever(Protocol):
 **Precision@K 在这个数据集上信息量很低。** 每条 Query 的相关文档只有 1–3 篇，于是 Precision@10 的理论上限就是 0.1–0.3。报告里应当把它列出来（题目要求），但**结论必须以 Recall@K / MRR / nDCG@K 为主**，并显式说明 P@K 的天花板效应——否则读者会把"P@10 = 0.2"误读成系统很差。
 
 **延迟的构成与直觉相反。** 在 150 行规模上，耗时几乎全部来自 Python 开销与模型推理，数据库本身可以忽略。报告必须分阶段给出，并注明测量硬件与是否包含预热。
+
+---
+
+## 11. 报告与复现架构（2026-10-20 新增，未验证）
+
+### 11.1 一条单向的数据流
+
+```
+scripts/benchmark_retrieval.py ─┐
+scripts/benchmark_index.py     ─┼─► reports/unified/*.json  (原始 artifact)
+scripts/benchmark_chunking.py  ─┤          │
+scripts/benchmark_fusion.py    ─┘          │  只读
+                                           ▼
+                              src/evaluation/report.py
+                                           │
+                              ┌────────────┴────────────┐
+                              ▼                         ▼
+                    reports/final_report.md     reports/figures/*.png
+```
+
+- **指标只在 benchmark 中计算一次。** `report.py` 读取已落盘的 artifact，不重新查询
+  数据库、不重新计算指标、不补零；缺失指标显示 `-`。
+- **每个表格都带来源。** 统一 artifact 的 `sha256` 与字段路径写入表头
+  （`[artifact: path#field sha256=...]`），每行引用 `benchmark#arms[i]`，读者可以从
+  报告数字回到 JSON 字段。
+- **覆盖保护。** `artifacts.ensure_writable(paths, overwrite=False)` 在所有写入口
+  （benchmark 脚本、report 脚本）执行；已有文件默认拒绝写入，必须显式
+  `--overwrite`。历史 `reports/*_benchmark.*` 不在默认输出路径上。
+- **合成规模与真实规模分离。** 索引扫描可用 `--synthetic-scale N` 复制向量以观察
+  HNSW / IVFFlat 的参数行为；artifact 标记 `SYNTHETIC`，且**不进入任何质量指标**。
+  150 行的真实数据下“参数无差异”本身就是需要如实报告的结论。
+- **进程隔离。** 各 benchmark 由 `scripts/benchmark_all.py` 以子进程顺序执行：
+  避免 Embedding 与 Reranker 在同一进程加载（Windows 原生崩溃风险），也让每个
+  artifact 对应一个可独立重跑的命令。
+
+### 11.2 状态语义
+
+`PASS` 只表示该 artifact 覆盖全部预期 Query 且前置门禁通过；缺 Query、部分臂失败
+是 `PARTIAL`；有失败是 `FAIL`；外部条件（数据库、Docker、Key）不满足是 `BLOCKED`。
+`None` 表示未计算，绝不写成 `0`。最终报告的状态是三个必需 artifact 状态的合取，
+缺任何一个即为 `PARTIAL`。

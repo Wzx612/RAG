@@ -28,8 +28,8 @@ services:
   app:
     build: .
     # Behind a profile so `docker compose up -d` brings up the database and
-    # nothing else -- the app container has no long-running command until the
-    # API lands in Phase 8. `docker compose run --rm app ...` still works.
+    # nothing else. `docker compose run --rm app ...` still works, and that is
+    # how every Makefile target uses this service.
     profiles: ["tools"]
     env_file:
       - path: .env
@@ -44,13 +44,58 @@ services:
       db:
         condition: service_healthy
 
-  # Phase 8 (bonus) -- uncomment when the API lands.
-  # api:
-  #   build: .
-  #   command: uvicorn src.api.app:app --host 0.0.0.0 --port 8000
-  #   ports: ["8000:8000"]
-  #   depends_on:
-  #     db: { condition: service_healthy }
+  # One-shot download of the embedding and reranker weights into hf_cache, so
+  # later runs can be exercised with HF_HUB_OFFLINE=1. No database needed.
+  warm-cache:
+    build: .
+    profiles: ["tools"]
+    command: ["python", "scripts/warm_cache.py"]
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./:/app
+      - hf_cache:/app/.cache/huggingface
+
+  # Read-only HTTP surface. `make api` (or `docker compose --profile api up -d
+  # api`) serves it on APEX_API_PORT (default 8000). The models stay lazy: the
+  # container starts without loading weights, and /readyz reports the database.
+  api:
+    build: .
+    profiles: ["api"]
+    command:
+      - uvicorn
+      - src.api.app:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APEX_PG_HOST: db
+      APEX_PG_PORT: 5432
+      APEX_API_HOST: 0.0.0.0
+      APEX_API_PORT: 8000
+    ports:
+      - "${APEX_API_PORT:-8000}:8000"
+    volumes:
+      - ./:/app
+      - hf_cache:/app/.cache/huggingface
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 volumes:
   pgdata:

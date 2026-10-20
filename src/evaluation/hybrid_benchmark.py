@@ -39,9 +39,10 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from src.config import PROJECT_ROOT, get_settings
+from src.evaluation.artifacts import ensure_writable
 from src.evaluation.dense_benchmark import (
     BenchmarkError,
     EvalQuery,
@@ -51,8 +52,8 @@ from src.evaluation.metrics import (
     LABELS_EXHAUSTIVE,
     METRIC_VERSION,
     RELEVANCE_SCHEME,
+    latency_summary,
     ndcg_at_k,
-    percentile,
     precision_at_k,
     recall_at_k,
 )
@@ -65,7 +66,7 @@ from src.retrieval.fusion import (
     RRFFusion,
     interleaved_union,
 )
-from src.schema.retrieval import DenseConfig, SearchHit, SparseConfig
+from src.schema.retrieval import DenseConfig, RetrievalStrategy, SearchHit, SparseConfig
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -99,6 +100,7 @@ class HybridBenchmarkConfig:
     rrf_k: int = RRF_K_DEFAULT
     repetitions: int = 5
     warmup_passes: int = 1
+    chunk_strategy: str = "document"
 
 
 # ------------------------------------------------------------------ validation
@@ -110,6 +112,7 @@ def build_config(
     rrf_k: int = RRF_K_DEFAULT,
     repetitions: int = 5,
     warmup_passes: int = 1,
+    chunk_strategy: str = "document",
 ) -> HybridBenchmarkConfig:
     """Validate benchmark parameters through the production config models.
 
@@ -119,6 +122,7 @@ def build_config(
         rrf_k: Standard RRF smoothing constant.
         repetitions: Timed passes per query.
         warmup_passes: Untimed passes per query.
+        chunk_strategy: Chunking strategy every arm is restricted to.
 
     Returns:
         A validated configuration.
@@ -141,8 +145,8 @@ def build_config(
     if isinstance(warmup_passes, bool) or not isinstance(warmup_passes, int) or warmup_passes < 0:
         raise BenchmarkError("warmup_passes must be a non-negative int")
     try:
-        DenseConfig(top_n=candidate_k)
-        SparseConfig(top_n=candidate_k)
+        DenseConfig(top_n=candidate_k, chunk_strategy=chunk_strategy)  # type: ignore[arg-type]
+        SparseConfig(top_n=candidate_k, chunk_strategy=chunk_strategy)  # type: ignore[arg-type]
         fusion = RRFFusion(k=rrf_k, candidate_k=candidate_k)
     except ValueError as exc:  # pydantic ValidationError subclasses ValueError
         raise BenchmarkError(f"invalid benchmark configuration: {exc}") from exc
@@ -152,24 +156,37 @@ def build_config(
         rrf_k=fusion.k,
         repetitions=repetitions,
         warmup_passes=warmup_passes,
+        chunk_strategy=chunk_strategy,
     )
 
 
 # ------------------------------------------------------------------- execution
 
 
-def _default_dense(candidate_k: int) -> Retriever:
+def _default_dense(candidate_k: int, chunk_strategy: str = "document") -> Retriever:
     """Construct the production dense retriever lazily."""
     from src.retrieval.dense import DenseRetriever
 
-    return DenseRetriever(DenseConfig(top_n=candidate_k))
+    return DenseRetriever(
+        DenseConfig(top_n=candidate_k, chunk_strategy=chunk_strategy)  # type: ignore[arg-type]
+    )
 
 
-def _default_sparse(candidate_k: int, query_mode: Literal["or", "and"]) -> Retriever:
+def _default_sparse(
+    candidate_k: int,
+    query_mode: Literal["or", "and"],
+    chunk_strategy: str = "document",
+) -> Retriever:
     """Construct a production sparse retriever in the requested mode."""
     from src.retrieval.sparse import SparseRetriever
 
-    return SparseRetriever(SparseConfig(top_n=candidate_k, query_mode=query_mode))
+    return SparseRetriever(
+        SparseConfig(
+            top_n=candidate_k,
+            query_mode=query_mode,
+            chunk_strategy=cast(RetrievalStrategy, chunk_strategy),
+        )
+    )
 
 
 @dataclass
@@ -339,13 +356,21 @@ def run_hybrid_benchmark(
     if not selected:
         raise BenchmarkError("at least one eval query is required")
 
-    dense = dense_retriever or _default_dense(config.candidate_k)
-    sparse_or = sparse_or_retriever or _default_sparse(config.candidate_k, "or")
-    sparse_and = sparse_and_retriever or _default_sparse(config.candidate_k, "and")
+    dense = dense_retriever or _default_dense(config.candidate_k, config.chunk_strategy)
+    sparse_or = sparse_or_retriever or _default_sparse(
+        config.candidate_k, "or", config.chunk_strategy
+    )
+    sparse_and = sparse_and_retriever or _default_sparse(
+        config.candidate_k, "and", config.chunk_strategy
+    )
     fusion = RRFFusion(k=config.rrf_k, candidate_k=config.candidate_k)
     notify = progress or (lambda _message: None)
 
-    environment_facts = dict(environment) if environment is not None else collect_environment()
+    environment_facts = (
+        dict(environment)
+        if environment is not None
+        else collect_environment(config.chunk_strategy)
+    )
     dataset_facts = dict(dataset) if dataset is not None else collect_dataset(selected)
 
     per_query: list[dict[str, Any]] = []
@@ -497,6 +522,7 @@ def run_hybrid_benchmark(
             "rrf_k": config.rrf_k,
             "repetitions": config.repetitions,
             "warmup_passes": config.warmup_passes,
+            "chunk_strategy": config.chunk_strategy,
             "arm_order": list(ARM_NAMES),
             "dense_config": dense_config_facts(dense),
             "sparse_or_query_mode": "or",
@@ -696,17 +722,8 @@ def _latency_for_arm(
 
 
 def _latency_summary(samples: Sequence[float]) -> dict[str, float | int | None]:
-    """Count, min, nearest-rank P50/P95, max and mean."""
-    if not samples:
-        return {"n": 0, "min": None, "p50": None, "p95": None, "max": None, "mean": None}
-    return {
-        "n": len(samples),
-        "min": min(samples),
-        "p50": percentile(samples, 50),
-        "p95": percentile(samples, 95),
-        "max": max(samples),
-        "mean": statistics.fmean(samples),
-    }
+    """Count, min, nearest-rank P50/P95/P99, max and mean."""
+    return latency_summary(samples)
 
 
 def _aggregate_delta(
@@ -945,8 +962,12 @@ def _sha256(path: Path) -> str:
         return "missing"
 
 
-def collect_environment() -> dict[str, Any]:
-    """Collect read-only runtime and database facts for the artifact."""
+def collect_environment(chunk_strategy: str = "document") -> dict[str, Any]:
+    """Collect read-only runtime and database facts for the artifact.
+
+    ``strategy_chunks`` / ``strategy_docs`` are scoped to ``chunk_strategy``;
+    the global ``chunks`` / ``distinct_chunk_docs`` remain for context.
+    """
     settings = get_settings()
     from src.db import connection, scalar
 
@@ -957,6 +978,22 @@ def collect_environment() -> dict[str, Any]:
         documents = int(scalar(conn, "SELECT count(*) FROM documents") or 0)
         chunks = int(scalar(conn, "SELECT count(*) FROM chunks") or 0)
         distinct_docs = int(scalar(conn, "SELECT count(DISTINCT doc_id) FROM chunks") or 0)
+        strategy_counts = conn.execute(
+            "SELECT count(*), count(DISTINCT doc_id) FROM chunks WHERE chunk_strategy = %s",
+            (chunk_strategy,),
+        ).fetchone()
+        strategy_chunks, strategy_docs = (
+            (int(strategy_counts[0]), int(strategy_counts[1]))
+            if strategy_counts is not None
+            else (0, 0)
+        )
+        chunk_strategies = {
+            str(row[0]): int(row[1])
+            for row in conn.execute(
+                "SELECT chunk_strategy, count(*) FROM chunks GROUP BY chunk_strategy "
+                "ORDER BY chunk_strategy"
+            ).fetchall()
+        }
         vec_version = scalar(conn, "SELECT extversion FROM pg_extension WHERE extname = 'vector'")
         server_version = scalar(conn, "SHOW server_version")
         hnsw = scalar(
@@ -995,9 +1032,13 @@ def collect_environment() -> dict[str, Any]:
         "postgres_version": str(server_version),
         "vector_version": str(vec_version) if vec_version else "missing",
         "server_address": f"{address[0]}:{address[1]}" if address else "unknown",
+        "chunk_strategy": chunk_strategy,
         "documents": documents,
         "chunks": chunks,
         "distinct_chunk_docs": distinct_docs,
+        "strategy_chunks": strategy_chunks,
+        "strategy_docs": strategy_docs,
+        "chunk_strategies": chunk_strategies,
         "embedding_dimensions": dimensions,
         "embedding_model": settings.embedding_model,
         "query_instruction": settings.query_instruction,
@@ -1015,6 +1056,7 @@ def collect_environment() -> dict[str, Any]:
                 "transformers",
                 "numpy",
                 "pydantic",
+                "psutil",
                 "pytest",
             )
         },
@@ -1062,13 +1104,14 @@ def dense_config_facts(retriever: Retriever) -> dict[str, Any]:
     """Record the dense retriever's effective parameters without assuming a type."""
     config = getattr(retriever, "config", None)
     if not isinstance(config, DenseConfig):
-        return {"top_n": None, "ef_search": None, "metric": None}
+        return {"top_n": None, "ef_search": None, "metric": None, "chunk_strategy": None}
     return {
         "top_n": config.top_n,
         "ef_search": config.ef_search,
         "m": config.m,
         "ef_construction": config.ef_construction,
         "metric": config.metric,
+        "chunk_strategy": config.chunk_strategy,
     }
 
 
@@ -1079,10 +1122,13 @@ def write_outputs(
     result: Mapping[str, Any],
     json_path: Path | None = None,
     markdown_path: Path | None = None,
+    *,
+    overwrite: bool = False,
 ) -> tuple[Path, Path]:
     """Write the raw JSON artifact and the rendered Markdown report."""
     json_path = json_path or DEFAULT_OUTPUT
     markdown_path = markdown_path or DEFAULT_REPORT
+    ensure_writable((json_path, markdown_path), overwrite=overwrite)
     json_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.parent.mkdir(parents=True, exist_ok=True)
     json_path.write_text(
@@ -1134,6 +1180,7 @@ def render_markdown(result: Mapping[str, Any]) -> str:
                     "空结果",
                     "P50 ms",
                     "P95 ms",
+                    "P99 ms",
                 ],
                 [
                     [
@@ -1147,6 +1194,7 @@ def render_markdown(result: Mapping[str, Any]) -> str:
                         record.get("empty_result_queries"),
                         _fmt(record.get("latency_ms", {}).get("p50")),
                         _fmt(record.get("latency_ms", {}).get("p95")),
+                        _fmt(record.get("latency_ms", {}).get("p99")),
                     ]
                     for arm in ARM_NAMES
                     if (record := arms.get(arm))
@@ -1265,6 +1313,10 @@ def render_markdown(result: Mapping[str, Any]) -> str:
         "documents",
         "chunks",
         "distinct_chunk_docs",
+        "chunk_strategy",
+        "strategy_chunks",
+        "strategy_docs",
+        "chunk_strategies",
         "embedding_model",
         "embedding_dimensions",
         "ef_search_setting",

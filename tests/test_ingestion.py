@@ -27,7 +27,7 @@ from src.ingestion.loader import (
     source_path,
     validate_records,
 )
-from src.schema.retrieval import ChunkingConfig
+from src.schema.retrieval import ChunkingConfig, ChunkStrategy
 
 EXPECTED_DOCUMENTS = 150
 EXPECTED_POLICY_FAMILIES = 78
@@ -186,11 +186,15 @@ def test_the_context_header_prepends_the_card_tier(corpus: list[Any]) -> None:
     assert chunk.content == corpus[0].content, "the header must not leak into displayed content"
 
 
-@pytest.mark.parametrize("strategy", ["fixed_window", "contextual"])
-def test_strategies_owned_by_phase_5_are_not_implemented_here(strategy: str) -> None:
-    """Experiment 5 compares all three; doing it early would guess at its parameters."""
-    with pytest.raises(IngestionError, match="implemented in Phase 5"):
-        chunk_document(_document_stub(), ChunkingConfig(strategy=strategy))  # type: ignore[arg-type]
+@pytest.mark.parametrize("strategy", ["fixed_window", "structured"])
+def test_multi_chunk_strategies_are_dispatched_by_the_chunker(
+    strategy: ChunkStrategy,
+) -> None:
+    """The dispatcher owns all implemented strategies; see ``test_chunker.py``."""
+    chunks = chunk_document(_document_stub(), ChunkingConfig(strategy=strategy))
+
+    assert chunks
+    assert all(chunk.chunk_strategy == strategy for chunk in chunks)
 
 
 def _document_stub() -> Any:

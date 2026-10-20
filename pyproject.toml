@@ -7,7 +7,7 @@ name = "apex-rag"
 version = "0.1.0"
 description = "Vector retrieval and RAG engine for the Apex Card Services agent co-pilot"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 license = { text = "MIT" }
 
 # Pinned exactly: the assessment is graded on reproducibility, so a reviewer
@@ -19,11 +19,12 @@ dependencies = [
     "pydantic==2.14.1",
     "pydantic-settings==2.16.0",
     "numpy==2.5.4",
+    # Imported at module level by src/evaluation/rerank_benchmark.py, so it is a
+    # hard runtime dependency of the benchmark package, not an optional probe.
+    "psutil==7.2.2",
     "torch==2.14.1",
     "transformers==5.20.0",
     "sentence-transformers==6.1.0",
-    "tabulate==0.10.0",
-    "matplotlib==3.11.2",
     "typer==0.27.3",
     "httpx==0.28.1",
 ]
@@ -31,11 +32,29 @@ dependencies = [
 [project.optional-dependencies]
 # Phase 8 (bonus): FastAPI service.
 api = ["fastapi==0.143.2", "uvicorn[standard]==0.38.0"]
+# P1 report rendering: tables and figures. Kept optional so retrieval-only
+# installs do not pull a plotting stack. `.[dev,report]` installs everything.
+report = ["tabulate==0.10.0", "matplotlib==3.11.2"]
 dev = ["pytest==9.1.1", "ruff==0.17.1", "mypy==2.4.0"]
+
+# ------------------------------------------------------------------- uv
+[tool.uv.sources]
+# Linux and Windows CPU wheels live on PyTorch's own index; macOS CPU wheels
+# are on PyPI. Without this mapping uv resolves PyPI's CUDA build, which the
+# Dockerfile explicitly avoids.
+torch = [
+    { index = "pytorch-cpu", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.setuptools]
 packages = [
     "src",
+    "src.api",
     "src.ingestion",
     "src.retrieval",
     "src.evaluation",
@@ -47,7 +66,7 @@ packages = [
 # ---------------------------------------------------------------- lint / types
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py312"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
@@ -64,7 +83,7 @@ convention = "google"
 "src/cli.py" = ["B008"]
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 warn_unused_configs = true
 disallow_untyped_defs = true
 warn_redundant_casts = true
@@ -73,7 +92,15 @@ no_implicit_optional = true
 check_untyped_defs = true
 
 [[tool.mypy.overrides]]
-module = ["sentence_transformers.*", "pgvector.*"]
+# Optional/compiled dependencies: the report extra is not installed in every
+# environment (CI installs it, a retrieval-only host does not), and mypy must
+# not turn that absence into a type error.
+module = [
+    "sentence_transformers.*",
+    "pgvector.*",
+    "matplotlib",
+    "matplotlib.*",
+]
 ignore_missing_imports = true
 
 # ------------------------------------------------------------------- testing

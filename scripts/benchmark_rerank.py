@@ -44,6 +44,7 @@ from typing import Any
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.config import get_settings  # noqa: E402
+from src.evaluation.artifacts import ArtifactExistsError, ensure_writable  # noqa: E402
 from src.evaluation.dense_benchmark import BenchmarkError, load_eval_queries  # noqa: E402
 from src.evaluation.rerank_benchmark import (  # noqa: E402
     DEFAULT_CACHE_FOLDER,
@@ -71,6 +72,7 @@ PARAMETER_KEYS = (
     "activation",
     "device",
     "latency_repetitions",
+    "chunk_strategy",
 )
 
 
@@ -124,6 +126,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Timed calls per latency combination after one warm-up",
     )
     parser.add_argument(
+        "--chunk-strategy",
+        choices=("document", "fixed_window", "structured"),
+        default="document",
+        help="Chunking strategy used by the live sparse latency pool",
+    )
+    parser.add_argument(
         "--direction-check",
         action=argparse.BooleanOptionalAction,
         default=True,
@@ -143,6 +151,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--dry-run", action="store_true", help="Check gates and exit")
     parser.add_argument("--no-write", action="store_true", help="Do not write report files")
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace existing report files at the selected paths",
+    )
     parser.add_argument(
         "--docker-timeout",
         type=float,
@@ -181,14 +194,23 @@ def _docker_status(timeout: float) -> str:
 def _validate_dataset(environment: dict[str, Any], dataset: dict[str, Any]) -> list[str]:
     """Return the reasons the evaluation would not be trustworthy."""
     settings = get_settings()
+    expected_documents = settings.expected_document_count
     problems: list[str] = []
-    if environment.get("documents") != settings.expected_document_count:
+    if environment.get("documents") != expected_documents:
         problems.append(
-            f"documents={environment.get('documents')}, expected {settings.expected_document_count}"
+            f"documents={environment.get('documents')}, expected {expected_documents}"
         )
-    if environment.get("chunks", 0) < environment.get("documents", 0):
+    strategy_chunks = environment.get("strategy_chunks", environment.get("chunks", 0))
+    strategy_docs = environment.get("strategy_docs", environment.get("documents", 0))
+    if strategy_docs != expected_documents:
         problems.append(
-            f"chunks={environment.get('chunks')} < documents={environment.get('documents')}"
+            f"chunk doc_ids for strategy {environment.get('chunk_strategy')!r}="
+            f"{strategy_docs}, expected {expected_documents}"
+        )
+    if strategy_chunks < expected_documents:
+        problems.append(
+            f"chunks for strategy {environment.get('chunk_strategy')!r}="
+            f"{strategy_chunks}, expected at least {expected_documents}"
         )
     dimensions = environment.get("embedding_dimensions") or []
     if dimensions != [settings.embedding_dim]:
@@ -237,9 +259,12 @@ def _print_environment(environment: dict[str, Any], dataset: dict[str, Any]) -> 
         "postgres_version",
         "vector_version",
         "server_address",
+        "chunk_strategy",
         "documents",
         "chunks",
         "distinct_chunk_docs",
+        "strategy_chunks",
+        "strategy_docs",
         "embedding_model",
         "embedding_dimensions",
         "ef_search_setting",
@@ -309,6 +334,8 @@ def _fmt(value: object, digits: int = 4) -> str:
 
 def _run(args: argparse.Namespace) -> int:
     """Execute the benchmark and return the process exit code."""
+    if not args.no_write and not args.dry_run:
+        ensure_writable((args.output, args.report), overwrite=args.overwrite)
     revision = args.revision or None
     config: RerankBenchmarkConfig = build_config(
         top_k=args.top_k,
@@ -323,6 +350,7 @@ def _run(args: argparse.Namespace) -> int:
         cache_folder=args.cache_folder,
         local_files_only=not args.allow_network,
         latency_repetitions=args.latency_repetitions,
+        chunk_strategy=args.chunk_strategy,
     )
     all_queries = load_eval_queries()
     if args.limit is not None:
@@ -334,7 +362,7 @@ def _run(args: argparse.Namespace) -> int:
     else:
         queries = all_queries
 
-    environment = collect_environment()
+    environment = collect_environment(args.chunk_strategy)
     environment["docker_status"] = _docker_status(args.docker_timeout)
     environment["command"] = " ".join([Path(sys.executable).name, *sys.argv])
     dataset = collect_dataset(all_queries)
@@ -389,14 +417,11 @@ def _run(args: argparse.Namespace) -> int:
         check_hashes=True,
     )
 
-    environment_after = collect_environment()
+    environment_after = collect_environment(args.chunk_strategy)
     dataset_after = collect_dataset(all_queries)
-    counts_before = {
-        key: environment.get(key) for key in ("documents", "chunks", "distinct_chunk_docs")
-    }
-    counts_after = {
-        key: environment_after.get(key) for key in ("documents", "chunks", "distinct_chunk_docs")
-    }
+    count_keys = ("documents", "chunks", "distinct_chunk_docs", "strategy_chunks", "strategy_docs")
+    counts_before = {key: environment.get(key) for key in count_keys}
+    counts_after = {key: environment_after.get(key) for key in count_keys}
     integrity_ok = (
         counts_before == counts_after
         and dataset.get("hashes") == dataset_after.get("hashes")
@@ -422,7 +447,9 @@ def _run(args: argparse.Namespace) -> int:
     if args.no_write:
         print("--no-write: report files were not written.")
     else:
-        json_path, markdown_path = write_outputs(result, args.output, args.report)
+        json_path, markdown_path = write_outputs(
+            result, args.output, args.report, overwrite=args.overwrite
+        )
         print(f"Raw results: {json_path}")
         print(f"Markdown report: {markdown_path}")
 
@@ -434,6 +461,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parse_args(list(argv) if argv is not None else None)
     try:
         return _run(args)
+    except ArtifactExistsError as exc:
+        print(f"BLOCKED: {exc}")
+        return 2
     except (BenchmarkError, RuntimeError, OSError) as exc:
         print(f"ERROR: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1

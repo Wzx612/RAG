@@ -57,6 +57,11 @@ ConnectionFactory = Callable[[], AbstractContextManager[psycopg.Connection]]
 # The outer join only attaches canonical document metadata. `%s` is bound as a
 # pgvector.Vector; no vector, query text or numeric value is interpolated into
 # the SQL string.
+#
+# `chunk_strategy` is a hard filter, not an afterthought: the primary key is
+# (chunk_strategy, chunk_id), so one document may have several chunkings in the
+# same table. Without the filter a Top-K could mix strategies and every metric
+# computed from it would be meaningless.
 DENSE_SEARCH_SQL = """
     SELECT
         c.chunk_id,
@@ -79,6 +84,7 @@ DENSE_SEARCH_SQL = """
             content,
             embedding <=> %s::vector AS distance
         FROM chunks
+        WHERE chunk_strategy = %s
         ORDER BY distance
         LIMIT %s
     ) AS c
@@ -202,7 +208,7 @@ class DenseRetriever:
                 raise RetrievalError(f"database connection failed: {exc}") from exc
 
             try:
-                hits = _rows_to_hits(rows)
+                hits = _rows_to_hits(rows, expected_strategy=self._config.chunk_strategy)
             except RetrievalError as exc:
                 logger.error(
                     "dense retrieval rejected database rows: %s (db_ms=%.2f)",
@@ -245,7 +251,7 @@ class DenseRetriever:
         with ef_search(conn, self._config.ef_search):
             rows = conn.execute(
                 DENSE_SEARCH_SQL,
-                (Vector(list(vector)), top_k),
+                (Vector(list(vector)), self._config.chunk_strategy, top_k),
                 prepare=False,
             ).fetchall()
             actual_ef = current_ef_search(conn)
@@ -289,10 +295,23 @@ def _validate_top_k(top_k: int | None, default: int) -> int:
     return top_k
 
 
-def _rows_to_hits(rows: list[tuple[Any, ...]]) -> list[SearchHit]:
-    """Map the SELECT's column order to validated :class:`SearchHit` objects."""
+def _rows_to_hits(
+    rows: list[tuple[Any, ...]],
+    *,
+    expected_strategy: str | None = None,
+) -> list[SearchHit]:
+    """Map the SELECT's column order to validated :class:`SearchHit` objects.
+
+    ``expected_strategy`` is a defence-in-depth check: the SQL already filters
+    on it, and a mismatch here means the query or the test double is wrong.
+    """
     hits: list[SearchHit] = []
     for rank, row in enumerate(rows, start=1):
+        if expected_strategy is not None and str(row[2]) != expected_strategy:
+            raise RetrievalError(
+                f"dense retrieval returned chunk_strategy={row[2]!r} for "
+                f"chunk {row[0]!r}, expected {expected_strategy!r}"
+            )
         distance = float(row[5])
         if not math.isfinite(distance):
             raise RetrievalError(f"database returned a non-finite distance for chunk {row[0]!r}")

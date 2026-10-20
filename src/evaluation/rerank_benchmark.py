@@ -37,12 +37,13 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import psutil  # type: ignore[import-untyped]
 
 from src.config import PROJECT_ROOT, get_settings
 from src.db import connection
+from src.evaluation.artifacts import ensure_writable
 from src.evaluation.dense_benchmark import (
     BenchmarkError,
     EvalQuery,
@@ -53,11 +54,11 @@ from src.evaluation.metrics import (
     LABELS_EXHAUSTIVE,
     METRIC_VERSION,
     RELEVANCE_SCHEME,
-    percentile,
+    latency_summary,
 )
 from src.retrieval.pipeline import RerankedRetriever
 from src.retrieval.reranker import CrossEncoderReranker, Reranker, RerankError, rerank_text
-from src.schema.retrieval import RerankConfig, SearchHit
+from src.schema.retrieval import RerankConfig, RetrievalStrategy, SearchHit
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -110,6 +111,7 @@ class RerankBenchmarkConfig:
     cache_folder: Path | None = DEFAULT_CACHE_FOLDER
     local_files_only: bool = True
     latency_repetitions: int = 2
+    chunk_strategy: str = "document"
 
 
 def build_config(
@@ -126,6 +128,7 @@ def build_config(
     cache_folder: Path | None = DEFAULT_CACHE_FOLDER,
     local_files_only: bool = True,
     latency_repetitions: int = 2,
+    chunk_strategy: str = "document",
 ) -> RerankBenchmarkConfig:
     """Validate the fixed comparison parameters through ``RerankConfig``.
 
@@ -164,6 +167,9 @@ def build_config(
             local_files_only=local_files_only,
             cache_folder=str(cache_folder) if cache_folder is not None else None,
         )
+        from src.schema.retrieval import SparseConfig
+
+        SparseConfig(top_n=50, chunk_strategy=chunk_strategy)  # type: ignore[arg-type]
     except ValueError as exc:  # pydantic ValidationError subclasses ValueError
         raise BenchmarkError(f"invalid reranker configuration: {exc}") from exc
     return RerankBenchmarkConfig(
@@ -179,6 +185,7 @@ def build_config(
         cache_folder=cache_folder,
         local_files_only=local_files_only,
         latency_repetitions=latency_repetitions,
+        chunk_strategy=chunk_strategy,
     )
 
 
@@ -277,6 +284,12 @@ def verify_historical(
             mismatches.append(
                 f"historical parameter {key}={parameters.get(key)!r}, expected {expected!r}"
             )
+    declared_strategy = parameters.get("chunk_strategy", "document")
+    if not _same(declared_strategy, config.chunk_strategy):
+        mismatches.append(
+            f"historical parameter chunk_strategy={declared_strategy!r}, "
+            f"expected {config.chunk_strategy!r}"
+        )
     if artifact.get("status") not in {"PASS", "PASS WITH MINOR ISSUES"}:
         mismatches.append(f"historical status is {artifact.get('status')!r}")
 
@@ -570,17 +583,8 @@ def _memory_snapshot() -> dict[str, Any]:
 
 
 def _latency_summary(samples: Sequence[float]) -> dict[str, Any]:
-    """Count, min, nearest-rank P50/P95, max and mean."""
-    if not samples:
-        return {"n": 0, "min": None, "p50": None, "p95": None, "max": None, "mean": None}
-    return {
-        "n": len(samples),
-        "min": min(samples),
-        "p50": percentile(samples, 50),
-        "p95": percentile(samples, 95),
-        "max": max(samples),
-        "mean": statistics.fmean(samples),
-    }
+    """Count, min, nearest-rank P50/P95/P99, max and mean."""
+    return latency_summary(samples)
 
 
 def _aggregate_arm(
@@ -1052,7 +1056,12 @@ def run_latency_probe(
     from src.schema.retrieval import SparseConfig
 
     try:
-        sparse = SparseRetriever(SparseConfig(top_n=50))
+        sparse = SparseRetriever(
+            SparseConfig(
+                top_n=50,
+                chunk_strategy=cast(RetrievalStrategy, config.chunk_strategy),
+            )
+        )
         pool = list(sparse.retrieve(query.query, top_k=50))
     except Exception as exc:  # noqa: BLE001 -- the probe is diagnostic
         return {
@@ -1198,7 +1207,11 @@ def run_rerank_benchmark(
     verification = verify_historical(
         artifact, selected, config, check_hashes=check_hashes
     )
-    environment_facts = dict(environment) if environment is not None else collect_environment()
+    environment_facts = (
+        dict(environment)
+        if environment is not None
+        else collect_environment(config.chunk_strategy)
+    )
     dataset_facts = dict(dataset) if dataset is not None else collect_dataset(selected)
     fetcher = text_fetcher or (
         lambda identities: fetch_chunk_texts(
@@ -1450,6 +1463,7 @@ def run_rerank_benchmark(
             "revision": config.revision,
             "local_files_only": config.local_files_only,
             "latency_repetitions": config.latency_repetitions,
+            "chunk_strategy": config.chunk_strategy,
             "arm_order": list(ARM_NAMES),
         },
         "definitions": _definitions(config),
@@ -1566,6 +1580,7 @@ def _failure_result(
             "model": config.model,
             "revision": config.revision,
             "local_files_only": config.local_files_only,
+            "chunk_strategy": config.chunk_strategy,
         },
         "definitions": _definitions(config),
         "environment": dict(environment),
@@ -1710,10 +1725,13 @@ def write_outputs(
     result: Mapping[str, Any],
     json_path: Path | None = None,
     markdown_path: Path | None = None,
+    *,
+    overwrite: bool = False,
 ) -> tuple[Path, Path]:
     """Write the raw JSON and the rendered Markdown report."""
     json_path = json_path or DEFAULT_OUTPUT
     markdown_path = markdown_path or DEFAULT_REPORT
+    ensure_writable((json_path, markdown_path), overwrite=overwrite)
     json_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.parent.mkdir(parents=True, exist_ok=True)
     json_path.write_text(
@@ -1786,6 +1804,7 @@ def render_markdown(result: Mapping[str, Any]) -> str:
                 "Hit@1",
                 "P50 ms",
                 "P95 ms",
+                "P99 ms",
             ],
             [
                 [
@@ -1797,6 +1816,7 @@ def render_markdown(result: Mapping[str, Any]) -> str:
                     f"{record.get('hit_at_1')}/{record.get('evaluated_queries')}",
                     _fmt(record.get("latency_ms", {}).get("p50")),
                     _fmt(record.get("latency_ms", {}).get("p95")),
+                    _fmt(record.get("latency_ms", {}).get("p99")),
                 ]
                 for arm, record in arms.items()
             ],

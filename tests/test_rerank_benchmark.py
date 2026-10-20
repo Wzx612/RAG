@@ -564,6 +564,25 @@ def test_partial_selection_does_not_compare_a_subset_to_full_aggregates() -> Non
     assert len(result["per_query"]) == 1
 
 
+def test_verification_rejects_an_artifact_from_another_chunk_scope() -> None:
+    """Historical evidence is only valid inside the scope it was produced for."""
+    config = build_config(
+        top_k=TOP_K,
+        candidate_k=CANDIDATE_K,
+        rrf_k=RRF_K,
+        batch_size=2,
+        max_length=128,
+        cache_folder=None,
+        revision=None,
+        latency_repetitions=1,
+        chunk_strategy="fixed_window",
+    )
+    verification = verify_historical(_artifact(), QUERIES, config, check_hashes=False)
+
+    assert verification["ok"] is False
+    assert any("chunk_strategy" in value for value in verification["mismatches"])
+
+
 def test_probe_is_absent_when_disabled() -> None:
     """`run_probe=False` performs no retrieval probe."""
     result = _run()

@@ -1,0 +1,6866 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-20T03:20:55.270955+00:00",
+  "status": "PASS",
+  "parameters": {
+    "queries": 30,
+    "top_k": 10,
+    "repetitions": 5,
+    "warmup_passes": 1,
+    "statement_timeout_ms": 5000,
+    "rank_weights": [
+      0.1,
+      0.2,
+      0.4,
+      1.0
+    ],
+    "language": "english",
+    "query_mode": "or",
+    "chunk_strategy": "document"
+  },
+  "definitions": {
+    "granularity": "chunk row; doc-level metrics deduplicate doc_id in rank order",
+    "semantic_recall": "recall_at_k over human relevant_doc_ids; denominator is the number of distinct gold docs; this is not ANN recall",
+    "sparse_score": "English path: ts_rank_cd weighted cover density, higher is better, not a probability and not comparable across queries. CJK path: number of matched query bigrams, also only comparable within a query.",
+    "latency_query_ms": "execute + fetch around the retrieval SELECT only",
+    "latency_db_ms": "pool borrow + transaction + timeout setup + execute + fetch"
+  },
+  "retrieval": {
+    "path_counts": {
+      "fts": 150
+    },
+    "per_query": [
+      {
+        "query_id": "Q-001",
+        "query": "How many days do I have to request a 0% intro balance transfer on Apex Platinum?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0001",
+          "document:DOC-0005",
+          "document:DOC-0013",
+          "document:DOC-0002",
+          "document:DOC-0150",
+          "document:DOC-0003",
+          "document:DOC-0004",
+          "document:DOC-0009",
+          "document:DOC-0014",
+          "document:DOC-0015"
+        ],
+        "doc_ids": [
+          "DOC-0001",
+          "DOC-0005",
+          "DOC-0013",
+          "DOC-0002",
+          "DOC-0150",
+          "DOC-0003",
+          "DOC-0004",
+          "DOC-0009",
+          "DOC-0014",
+          "DOC-0015"
+        ],
+        "gold_ranks": {
+          "DOC-0001": 1,
+          "DOC-0005": 2
+        },
+        "top_score": 15.6,
+        "hits": [
+          {
+            "key": "document:DOC-0001",
+            "chunk_id": "DOC-0001",
+            "doc_id": "DOC-0001",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 15.6,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0005",
+            "chunk_id": "DOC-0005",
+            "doc_id": "DOC-0005",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 10.8,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0013",
+            "chunk_id": "DOC-0013",
+            "doc_id": "DOC-0013",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.6,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0002",
+            "chunk_id": "DOC-0002",
+            "doc_id": "DOC-0002",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.0,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0150",
+            "chunk_id": "DOC-0150",
+            "doc_id": "DOC-0150",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.8,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0003",
+            "chunk_id": "DOC-0003",
+            "doc_id": "DOC-0003",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.4,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0004",
+            "chunk_id": "DOC-0004",
+            "doc_id": "DOC-0004",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.4,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0009",
+            "chunk_id": "DOC-0009",
+            "doc_id": "DOC-0009",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.6,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0014",
+            "chunk_id": "DOC-0014",
+            "doc_id": "DOC-0014",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.2,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0015",
+            "chunk_id": "DOC-0015",
+            "doc_id": "DOC-0015",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.2,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            2.215996995801106,
+            2.208630998211447,
+            2.1348399968701415,
+            4.11379700381076,
+            2.0796949975192547
+          ],
+          "db_ms": [
+            3.214769996702671,
+            2.7492590015754104,
+            2.917379002610687,
+            4.650992996175773,
+            2.745316000073217
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-002",
+        "query": "What is the balance transfer fee for the Everyday Freedom card?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0014",
+          "document:DOC-0006",
+          "document:DOC-0033",
+          "document:DOC-0037",
+          "document:DOC-0003",
+          "document:DOC-0011",
+          "document:DOC-0044",
+          "document:DOC-0063",
+          "document:DOC-0070",
+          "document:DOC-0075"
+        ],
+        "doc_ids": [
+          "DOC-0014",
+          "DOC-0006",
+          "DOC-0033",
+          "DOC-0037",
+          "DOC-0003",
+          "DOC-0011",
+          "DOC-0044",
+          "DOC-0063",
+          "DOC-0070",
+          "DOC-0075"
+        ],
+        "gold_ranks": {
+          "DOC-0003": 5
+        },
+        "top_score": 8.8,
+        "hits": [
+          {
+            "key": "document:DOC-0014",
+            "chunk_id": "DOC-0014",
+            "doc_id": "DOC-0014",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.8,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0006",
+            "chunk_id": "DOC-0006",
+            "doc_id": "DOC-0006",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.4,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0033",
+            "chunk_id": "DOC-0033",
+            "doc_id": "DOC-0033",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.2,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0037",
+            "chunk_id": "DOC-0037",
+            "doc_id": "DOC-0037",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.2,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0003",
+            "chunk_id": "DOC-0003",
+            "doc_id": "DOC-0003",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.6,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0011",
+            "chunk_id": "DOC-0011",
+            "doc_id": "DOC-0011",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.2,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0044",
+            "chunk_id": "DOC-0044",
+            "doc_id": "DOC-0044",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0063",
+            "chunk_id": "DOC-0063",
+            "doc_id": "DOC-0063",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.6,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0070",
+            "chunk_id": "DOC-0070",
+            "doc_id": "DOC-0070",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.6,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0075",
+            "chunk_id": "DOC-0075",
+            "doc_id": "DOC-0075",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.6,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.2171990019851364,
+            1.2189259941806085,
+            1.1872649993165396,
+            1.434036996215582,
+            1.2896760017611086
+          ],
+          "db_ms": [
+            1.633030995435547,
+            1.6344489995390177,
+            1.5507589996559545,
+            1.9124899990856647,
+            1.8336909997742623
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-003",
+        "query": "How long does it take for an external balance transfer to process on Apex Platinum?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0005",
+          "document:DOC-0001",
+          "document:DOC-0013",
+          "document:DOC-0009",
+          "document:DOC-0004",
+          "document:DOC-0014",
+          "document:DOC-0015",
+          "document:DOC-0150",
+          "document:DOC-0002",
+          "document:DOC-0050"
+        ],
+        "doc_ids": [
+          "DOC-0005",
+          "DOC-0001",
+          "DOC-0013",
+          "DOC-0009",
+          "DOC-0004",
+          "DOC-0014",
+          "DOC-0015",
+          "DOC-0150",
+          "DOC-0002",
+          "DOC-0050"
+        ],
+        "gold_ranks": {
+          "DOC-0005": 1
+        },
+        "top_score": 12.6,
+        "hits": [
+          {
+            "key": "document:DOC-0005",
+            "chunk_id": "DOC-0005",
+            "doc_id": "DOC-0005",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 12.6,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0001",
+            "chunk_id": "DOC-0001",
+            "doc_id": "DOC-0001",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 11.6,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0013",
+            "chunk_id": "DOC-0013",
+            "doc_id": "DOC-0013",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.6,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0009",
+            "chunk_id": "DOC-0009",
+            "doc_id": "DOC-0009",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.6,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0004",
+            "chunk_id": "DOC-0004",
+            "doc_id": "DOC-0004",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.2,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0014",
+            "chunk_id": "DOC-0014",
+            "doc_id": "DOC-0014",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.2,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0015",
+            "chunk_id": "DOC-0015",
+            "doc_id": "DOC-0015",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.2,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0150",
+            "chunk_id": "DOC-0150",
+            "doc_id": "DOC-0150",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0002",
+            "chunk_id": "DOC-0002",
+            "doc_id": "DOC-0002",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0050",
+            "chunk_id": "DOC-0050",
+            "doc_id": "DOC-0050",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.8848639956559055,
+            1.879192997876089,
+            1.8993109988514334,
+            1.9650739995995536,
+            2.0822959995712154
+          ],
+          "db_ms": [
+            2.3201069998322055,
+            2.2735439997632056,
+            2.300582993484568,
+            2.393434006080497,
+            2.617237994854804
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-004",
+        "query": "How long do I have to report an unauthorized charge under the zero liability fraud policy?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0016",
+          "document:DOC-0018",
+          "document:DOC-0017",
+          "document:DOC-0019",
+          "document:DOC-0030",
+          "document:DOC-0028",
+          "document:DOC-0029",
+          "document:DOC-0084",
+          "document:DOC-0025",
+          "document:DOC-0027"
+        ],
+        "doc_ids": [
+          "DOC-0016",
+          "DOC-0018",
+          "DOC-0017",
+          "DOC-0019",
+          "DOC-0030",
+          "DOC-0028",
+          "DOC-0029",
+          "DOC-0084",
+          "DOC-0025",
+          "DOC-0027"
+        ],
+        "gold_ranks": {
+          "DOC-0016": 1,
+          "DOC-0018": 2,
+          "DOC-0017": 3
+        },
+        "top_score": 8.0,
+        "hits": [
+          {
+            "key": "document:DOC-0016",
+            "chunk_id": "DOC-0016",
+            "doc_id": "DOC-0016",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.0,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0018",
+            "chunk_id": "DOC-0018",
+            "doc_id": "DOC-0018",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 5.8,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0017",
+            "chunk_id": "DOC-0017",
+            "doc_id": "DOC-0017",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 5.6,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0019",
+            "chunk_id": "DOC-0019",
+            "doc_id": "DOC-0019",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 5.2,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0030",
+            "chunk_id": "DOC-0030",
+            "doc_id": "DOC-0030",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.8,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0028",
+            "chunk_id": "DOC-0028",
+            "doc_id": "DOC-0028",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.4,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0029",
+            "chunk_id": "DOC-0029",
+            "doc_id": "DOC-0029",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.4,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0084",
+            "chunk_id": "DOC-0084",
+            "doc_id": "DOC-0084",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0025",
+            "chunk_id": "DOC-0025",
+            "doc_id": "DOC-0025",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.4,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0027",
+            "chunk_id": "DOC-0027",
+            "doc_id": "DOC-0027",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.4,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.845508006226737,
+            1.8581339973025024,
+            1.780480997695122,
+            2.210393999121152,
+            2.1085979969939217
+          ],
+          "db_ms": [
+            2.3402670049108565,
+            2.316170997801237,
+            2.2300670025288127,
+            2.622533997055143,
+            2.7058690029662102
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-005",
+        "query": "What is the maximum deadline for filing a merchant chargeback dispute?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0020",
+          "document:DOC-0022",
+          "document:DOC-0023",
+          "document:DOC-0021",
+          "document:DOC-0026",
+          "document:DOC-0130",
+          "document:DOC-0024",
+          "document:DOC-0025",
+          "document:DOC-0027",
+          "document:DOC-0008"
+        ],
+        "doc_ids": [
+          "DOC-0020",
+          "DOC-0022",
+          "DOC-0023",
+          "DOC-0021",
+          "DOC-0026",
+          "DOC-0130",
+          "DOC-0024",
+          "DOC-0025",
+          "DOC-0027",
+          "DOC-0008"
+        ],
+        "gold_ranks": {
+          "DOC-0020": 1,
+          "DOC-0022": 2,
+          "DOC-0021": 4
+        },
+        "top_score": 4.6,
+        "hits": [
+          {
+            "key": "document:DOC-0020",
+            "chunk_id": "DOC-0020",
+            "doc_id": "DOC-0020",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 4.6,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0022",
+            "chunk_id": "DOC-0022",
+            "doc_id": "DOC-0022",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.2,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0023",
+            "chunk_id": "DOC-0023",
+            "doc_id": "DOC-0023",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.0,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0021",
+            "chunk_id": "DOC-0021",
+            "doc_id": "DOC-0021",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.8,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0026",
+            "chunk_id": "DOC-0026",
+            "doc_id": "DOC-0026",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.4,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0130",
+            "chunk_id": "DOC-0130",
+            "doc_id": "DOC-0130",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.4,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0024",
+            "chunk_id": "DOC-0024",
+            "doc_id": "DOC-0024",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.2,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0025",
+            "chunk_id": "DOC-0025",
+            "doc_id": "DOC-0025",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 0.8,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0027",
+            "chunk_id": "DOC-0027",
+            "doc_id": "DOC-0027",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 0.8,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0008",
+            "chunk_id": "DOC-0008",
+            "doc_id": "DOC-0008",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 0.4,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            0.7709999990765937,
+            0.7229990005725995,
+            0.7094120010151528,
+            0.7493380035157315,
+            0.7400429967674427
+          ],
+          "db_ms": [
+            1.2026670010527596,
+            1.163114000519272,
+            1.0873790015466511,
+            1.230672001838684,
+            1.1491039986140095
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-006",
+        "query": "When will I receive my provisional credit during a transaction dispute?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0024",
+          "document:DOC-0026",
+          "document:DOC-0027",
+          "document:DOC-0025",
+          "document:DOC-0020",
+          "document:DOC-0058",
+          "document:DOC-0065",
+          "document:DOC-0106",
+          "document:DOC-0107",
+          "document:DOC-0108"
+        ],
+        "doc_ids": [
+          "DOC-0024",
+          "DOC-0026",
+          "DOC-0027",
+          "DOC-0025",
+          "DOC-0020",
+          "DOC-0058",
+          "DOC-0065",
+          "DOC-0106",
+          "DOC-0107",
+          "DOC-0108"
+        ],
+        "gold_ranks": {
+          "DOC-0024": 1,
+          "DOC-0026": 2,
+          "DOC-0025": 4
+        },
+        "top_score": 4.8,
+        "hits": [
+          {
+            "key": "document:DOC-0024",
+            "chunk_id": "DOC-0024",
+            "doc_id": "DOC-0024",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 4.8,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0026",
+            "chunk_id": "DOC-0026",
+            "doc_id": "DOC-0026",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.6,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0027",
+            "chunk_id": "DOC-0027",
+            "doc_id": "DOC-0027",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.6,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0025",
+            "chunk_id": "DOC-0025",
+            "doc_id": "DOC-0025",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.2,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0020",
+            "chunk_id": "DOC-0020",
+            "doc_id": "DOC-0020",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0058",
+            "chunk_id": "DOC-0058",
+            "doc_id": "DOC-0058",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.2,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0065",
+            "chunk_id": "DOC-0065",
+            "doc_id": "DOC-0065",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.2,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0106",
+            "chunk_id": "DOC-0106",
+            "doc_id": "DOC-0106",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.2,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0107",
+            "chunk_id": "DOC-0107",
+            "doc_id": "DOC-0107",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.2,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0108",
+            "chunk_id": "DOC-0108",
+            "doc_id": "DOC-0108",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.2,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            0.9204430025420152,
+            0.9763319976627827,
+            0.8946180023485795,
+            0.8639700026833452,
+            0.8929760006139986
+          ],
+          "db_ms": [
+            1.4436190031119622,
+            1.3777709973510355,
+            1.3040630001341924,
+            1.254397000593599,
+            1.262942998437211
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-007",
+        "query": "Can a Tier 1 customer service agent waive the annual fee on Apex Platinum?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0031",
+          "document:DOC-0035",
+          "document:DOC-0032",
+          "document:DOC-0039",
+          "document:DOC-0043",
+          "document:DOC-0033",
+          "document:DOC-0104",
+          "document:DOC-0050",
+          "document:DOC-0061",
+          "document:DOC-0034"
+        ],
+        "doc_ids": [
+          "DOC-0031",
+          "DOC-0035",
+          "DOC-0032",
+          "DOC-0039",
+          "DOC-0043",
+          "DOC-0033",
+          "DOC-0104",
+          "DOC-0050",
+          "DOC-0061",
+          "DOC-0034"
+        ],
+        "gold_ranks": {
+          "DOC-0031": 1
+        },
+        "top_score": 12.4,
+        "hits": [
+          {
+            "key": "document:DOC-0031",
+            "chunk_id": "DOC-0031",
+            "doc_id": "DOC-0031",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 12.4,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0035",
+            "chunk_id": "DOC-0035",
+            "doc_id": "DOC-0035",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.2,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0032",
+            "chunk_id": "DOC-0032",
+            "doc_id": "DOC-0032",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.6,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0039",
+            "chunk_id": "DOC-0039",
+            "doc_id": "DOC-0039",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0043",
+            "chunk_id": "DOC-0043",
+            "doc_id": "DOC-0043",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0033",
+            "chunk_id": "DOC-0033",
+            "doc_id": "DOC-0033",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.2,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0104",
+            "chunk_id": "DOC-0104",
+            "doc_id": "DOC-0104",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0050",
+            "chunk_id": "DOC-0050",
+            "doc_id": "DOC-0050",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0061",
+            "chunk_id": "DOC-0061",
+            "doc_id": "DOC-0061",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0034",
+            "chunk_id": "DOC-0034",
+            "doc_id": "DOC-0034",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.4,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            2.4039659983827733,
+            2.2398310029529966,
+            2.2665779979433864,
+            2.251300997158978,
+            2.2467430026154034
+          ],
+          "db_ms": [
+            2.8192309982841834,
+            2.651799004524946,
+            2.7746970008593053,
+            2.628260997880716,
+            2.6186280010733753
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-008",
+        "query": "Does the Apex Preferred Travel card charge foreign transaction fees when traveling abroad?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0036",
+          "document:DOC-0032",
+          "document:DOC-0040",
+          "document:DOC-0062",
+          "document:DOC-0072",
+          "document:DOC-0035",
+          "document:DOC-0037",
+          "document:DOC-0088",
+          "document:DOC-0045",
+          "document:DOC-0047"
+        ],
+        "doc_ids": [
+          "DOC-0036",
+          "DOC-0032",
+          "DOC-0040",
+          "DOC-0062",
+          "DOC-0072",
+          "DOC-0035",
+          "DOC-0037",
+          "DOC-0088",
+          "DOC-0045",
+          "DOC-0047"
+        ],
+        "gold_ranks": {
+          "DOC-0036": 1
+        },
+        "top_score": 13.6,
+        "hits": [
+          {
+            "key": "document:DOC-0036",
+            "chunk_id": "DOC-0036",
+            "doc_id": "DOC-0036",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 13.6,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0032",
+            "chunk_id": "DOC-0032",
+            "doc_id": "DOC-0032",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 11.0,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0040",
+            "chunk_id": "DOC-0040",
+            "doc_id": "DOC-0040",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.8,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0062",
+            "chunk_id": "DOC-0062",
+            "doc_id": "DOC-0062",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.4,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0072",
+            "chunk_id": "DOC-0072",
+            "doc_id": "DOC-0072",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.4,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0035",
+            "chunk_id": "DOC-0035",
+            "doc_id": "DOC-0035",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.0,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0037",
+            "chunk_id": "DOC-0037",
+            "doc_id": "DOC-0037",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.0,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0088",
+            "chunk_id": "DOC-0088",
+            "doc_id": "DOC-0088",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.6,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0045",
+            "chunk_id": "DOC-0045",
+            "doc_id": "DOC-0045",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.4,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0047",
+            "chunk_id": "DOC-0047",
+            "doc_id": "DOC-0047",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.4,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            2.2281240017036907,
+            2.278220003063325,
+            2.372442999330815,
+            2.170550993469078,
+            2.2062470015953295
+          ],
+          "db_ms": [
+            2.657142002135515,
+            2.6825259992619976,
+            2.9143290012143552,
+            2.5813270040089265,
+            2.633971002069302
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-009",
+        "query": "What is the daily cutoff time for submitting payments on time?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0040",
+          "document:DOC-0039",
+          "document:DOC-0009",
+          "document:DOC-0041",
+          "document:DOC-0044",
+          "document:DOC-0147",
+          "document:DOC-0010",
+          "document:DOC-0012",
+          "document:DOC-0140",
+          "document:DOC-0141"
+        ],
+        "doc_ids": [
+          "DOC-0040",
+          "DOC-0039",
+          "DOC-0009",
+          "DOC-0041",
+          "DOC-0044",
+          "DOC-0147",
+          "DOC-0010",
+          "DOC-0012",
+          "DOC-0140",
+          "DOC-0141"
+        ],
+        "gold_ranks": {
+          "DOC-0040": 1,
+          "DOC-0039": 2,
+          "DOC-0041": 4
+        },
+        "top_score": 3.6,
+        "hits": [
+          {
+            "key": "document:DOC-0040",
+            "chunk_id": "DOC-0040",
+            "doc_id": "DOC-0040",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.6,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0039",
+            "chunk_id": "DOC-0039",
+            "doc_id": "DOC-0039",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0009",
+            "chunk_id": "DOC-0009",
+            "doc_id": "DOC-0009",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.2,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0041",
+            "chunk_id": "DOC-0041",
+            "doc_id": "DOC-0041",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.8,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0044",
+            "chunk_id": "DOC-0044",
+            "doc_id": "DOC-0044",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.8,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0147",
+            "chunk_id": "DOC-0147",
+            "doc_id": "DOC-0147",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.8,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0010",
+            "chunk_id": "DOC-0010",
+            "doc_id": "DOC-0010",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.4,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0012",
+            "chunk_id": "DOC-0012",
+            "doc_id": "DOC-0012",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.4,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0140",
+            "chunk_id": "DOC-0140",
+            "doc_id": "DOC-0140",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.4,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0141",
+            "chunk_id": "DOC-0141",
+            "doc_id": "DOC-0141",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.4,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            0.8949430048232898,
+            0.8895749997464009,
+            0.8036290018935688,
+            0.7812050025677308,
+            0.8834889958961867
+          ],
+          "db_ms": [
+            1.312815998971928,
+            1.3782019959762692,
+            1.2885850010206923,
+            1.1503249988891184,
+            1.4275170033215545
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-010",
+        "query": "How many guest passes are included with Priority Pass Select on Apex Platinum?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0046",
+          "document:DOC-0049",
+          "document:DOC-0050",
+          "document:DOC-0132",
+          "document:DOC-0031",
+          "document:DOC-0035",
+          "document:DOC-0038",
+          "document:DOC-0054",
+          "document:DOC-0061",
+          "document:DOC-0001"
+        ],
+        "doc_ids": [
+          "DOC-0046",
+          "DOC-0049",
+          "DOC-0050",
+          "DOC-0132",
+          "DOC-0031",
+          "DOC-0035",
+          "DOC-0038",
+          "DOC-0054",
+          "DOC-0061",
+          "DOC-0001"
+        ],
+        "gold_ranks": {
+          "DOC-0046": 1
+        },
+        "top_score": 8.0,
+        "hits": [
+          {
+            "key": "document:DOC-0046",
+            "chunk_id": "DOC-0046",
+            "doc_id": "DOC-0046",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.0,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0049",
+            "chunk_id": "DOC-0049",
+            "doc_id": "DOC-0049",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0050",
+            "chunk_id": "DOC-0050",
+            "doc_id": "DOC-0050",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.4,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0132",
+            "chunk_id": "DOC-0132",
+            "doc_id": "DOC-0132",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.2,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0031",
+            "chunk_id": "DOC-0031",
+            "doc_id": "DOC-0031",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.0,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0035",
+            "chunk_id": "DOC-0035",
+            "doc_id": "DOC-0035",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.0,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0038",
+            "chunk_id": "DOC-0038",
+            "doc_id": "DOC-0038",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.0,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0054",
+            "chunk_id": "DOC-0054",
+            "doc_id": "DOC-0054",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.0,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0061",
+            "chunk_id": "DOC-0061",
+            "doc_id": "DOC-0061",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.0,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0001",
+            "chunk_id": "DOC-0001",
+            "doc_id": "DOC-0001",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 5.6,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            2.09362999885343,
+            2.077662000374403,
+            2.1129999950062484,
+            2.068351001071278,
+            2.048408998234663
+          ],
+          "db_ms": [
+            2.4787349975667894,
+            2.6490969976293854,
+            2.6291109970770776,
+            2.4790399984340183,
+            2.5063439970836043
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-011",
+        "query": "Do Apex Reward points expire if I keep my account active?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0050",
+          "document:DOC-0052",
+          "document:DOC-0051",
+          "document:DOC-0053",
+          "document:DOC-0086",
+          "document:DOC-0135",
+          "document:DOC-0001",
+          "document:DOC-0031",
+          "document:DOC-0148",
+          "document:DOC-0057"
+        ],
+        "doc_ids": [
+          "DOC-0050",
+          "DOC-0052",
+          "DOC-0051",
+          "DOC-0053",
+          "DOC-0086",
+          "DOC-0135",
+          "DOC-0001",
+          "DOC-0031",
+          "DOC-0148",
+          "DOC-0057"
+        ],
+        "gold_ranks": {
+          "DOC-0050": 1,
+          "DOC-0052": 2,
+          "DOC-0051": 3
+        },
+        "top_score": 8.8,
+        "hits": [
+          {
+            "key": "document:DOC-0050",
+            "chunk_id": "DOC-0050",
+            "doc_id": "DOC-0050",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.8,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0052",
+            "chunk_id": "DOC-0052",
+            "doc_id": "DOC-0052",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0051",
+            "chunk_id": "DOC-0051",
+            "doc_id": "DOC-0051",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.6,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0053",
+            "chunk_id": "DOC-0053",
+            "doc_id": "DOC-0053",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.2,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0086",
+            "chunk_id": "DOC-0086",
+            "doc_id": "DOC-0086",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 5.0,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0135",
+            "chunk_id": "DOC-0135",
+            "doc_id": "DOC-0135",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 4.6,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0001",
+            "chunk_id": "DOC-0001",
+            "doc_id": "DOC-0001",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 4.4,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0031",
+            "chunk_id": "DOC-0031",
+            "doc_id": "DOC-0031",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 4.4,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0148",
+            "chunk_id": "DOC-0148",
+            "doc_id": "DOC-0148",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 4.2,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0057",
+            "chunk_id": "DOC-0057",
+            "doc_id": "DOC-0057",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 4.0,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.6106879993458278,
+            1.6896969973458908,
+            1.5801029949216172,
+            1.7951140034710988,
+            1.5951829991536215
+          ],
+          "db_ms": [
+            2.037536003626883,
+            2.2412499965867028,
+            1.9580990046961233,
+            2.1281169974827208,
+            2.0087750017410144
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-012",
+        "query": "What is the deductible and coverage limit for cell phone protection on Apex Platinum?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0054",
+          "document:DOC-0114",
+          "document:DOC-0056",
+          "document:DOC-0057",
+          "document:DOC-0065",
+          "document:DOC-0101",
+          "document:DOC-0110",
+          "document:DOC-0013",
+          "document:DOC-0016",
+          "document:DOC-0050"
+        ],
+        "doc_ids": [
+          "DOC-0054",
+          "DOC-0114",
+          "DOC-0056",
+          "DOC-0057",
+          "DOC-0065",
+          "DOC-0101",
+          "DOC-0110",
+          "DOC-0013",
+          "DOC-0016",
+          "DOC-0050"
+        ],
+        "gold_ranks": {
+          "DOC-0054": 1
+        },
+        "top_score": 9.8,
+        "hits": [
+          {
+            "key": "document:DOC-0054",
+            "chunk_id": "DOC-0054",
+            "doc_id": "DOC-0054",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.8,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0114",
+            "chunk_id": "DOC-0114",
+            "doc_id": "DOC-0114",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.8,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0056",
+            "chunk_id": "DOC-0056",
+            "doc_id": "DOC-0056",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0057",
+            "chunk_id": "DOC-0057",
+            "doc_id": "DOC-0057",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0065",
+            "chunk_id": "DOC-0065",
+            "doc_id": "DOC-0065",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0101",
+            "chunk_id": "DOC-0101",
+            "doc_id": "DOC-0101",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0110",
+            "chunk_id": "DOC-0110",
+            "doc_id": "DOC-0110",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0013",
+            "chunk_id": "DOC-0013",
+            "doc_id": "DOC-0013",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.6,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0016",
+            "chunk_id": "DOC-0016",
+            "doc_id": "DOC-0016",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.6,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0050",
+            "chunk_id": "DOC-0050",
+            "doc_id": "DOC-0050",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.4,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.9563759997254238,
+            1.8950369994854555,
+            1.9459300019661896,
+            1.9013489945791662,
+            1.855784998042509
+          ],
+          "db_ms": [
+            2.3970050024217926,
+            2.2592129971599206,
+            2.3673000032431446,
+            2.2882240009494126,
+            2.3922859982121736
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-013",
+        "query": "How quickly can I receive an emergency replacement card if lost overseas on Apex Platinum?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0061",
+          "document:DOC-0062",
+          "document:DOC-0073",
+          "document:DOC-0101",
+          "document:DOC-0054",
+          "document:DOC-0063",
+          "document:DOC-0028",
+          "document:DOC-0097",
+          "document:DOC-0031",
+          "document:DOC-0035"
+        ],
+        "doc_ids": [
+          "DOC-0061",
+          "DOC-0062",
+          "DOC-0073",
+          "DOC-0101",
+          "DOC-0054",
+          "DOC-0063",
+          "DOC-0028",
+          "DOC-0097",
+          "DOC-0031",
+          "DOC-0035"
+        ],
+        "gold_ranks": {
+          "DOC-0061": 1
+        },
+        "top_score": 11.2,
+        "hits": [
+          {
+            "key": "document:DOC-0061",
+            "chunk_id": "DOC-0061",
+            "doc_id": "DOC-0061",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 11.2,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0062",
+            "chunk_id": "DOC-0062",
+            "doc_id": "DOC-0062",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.2,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0073",
+            "chunk_id": "DOC-0073",
+            "doc_id": "DOC-0073",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0101",
+            "chunk_id": "DOC-0101",
+            "doc_id": "DOC-0101",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0054",
+            "chunk_id": "DOC-0054",
+            "doc_id": "DOC-0054",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0063",
+            "chunk_id": "DOC-0063",
+            "doc_id": "DOC-0063",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0028",
+            "chunk_id": "DOC-0028",
+            "doc_id": "DOC-0028",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.6,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0097",
+            "chunk_id": "DOC-0097",
+            "doc_id": "DOC-0097",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.6,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0031",
+            "chunk_id": "DOC-0031",
+            "doc_id": "DOC-0031",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.4,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0035",
+            "chunk_id": "DOC-0035",
+            "doc_id": "DOC-0035",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.4,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            2.0490089955274016,
+            2.0541070043691434,
+            2.01745200320147,
+            2.0074429994565435,
+            2.0082179980818182
+          ],
+          "db_ms": [
+            2.4987479991978034,
+            2.5353040036861785,
+            2.491596002073493,
+            2.4581180041423067,
+            2.4467889961670153
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-014",
+        "query": "How many months must I wait before requesting a credit limit increase?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0065",
+          "document:DOC-0066",
+          "document:DOC-0114",
+          "document:DOC-0067",
+          "document:DOC-0110",
+          "document:DOC-0068",
+          "document:DOC-0150",
+          "document:DOC-0106",
+          "document:DOC-0107",
+          "document:DOC-0108"
+        ],
+        "doc_ids": [
+          "DOC-0065",
+          "DOC-0066",
+          "DOC-0114",
+          "DOC-0067",
+          "DOC-0110",
+          "DOC-0068",
+          "DOC-0150",
+          "DOC-0106",
+          "DOC-0107",
+          "DOC-0108"
+        ],
+        "gold_ranks": {
+          "DOC-0065": 1,
+          "DOC-0066": 2,
+          "DOC-0067": 4
+        },
+        "top_score": 7.4,
+        "hits": [
+          {
+            "key": "document:DOC-0065",
+            "chunk_id": "DOC-0065",
+            "doc_id": "DOC-0065",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0066",
+            "chunk_id": "DOC-0066",
+            "doc_id": "DOC-0066",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.8,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0114",
+            "chunk_id": "DOC-0114",
+            "doc_id": "DOC-0114",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.4,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0067",
+            "chunk_id": "DOC-0067",
+            "doc_id": "DOC-0067",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.2,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0110",
+            "chunk_id": "DOC-0110",
+            "doc_id": "DOC-0110",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.2,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0068",
+            "chunk_id": "DOC-0068",
+            "doc_id": "DOC-0068",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.8,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0150",
+            "chunk_id": "DOC-0150",
+            "doc_id": "DOC-0150",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.8,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0106",
+            "chunk_id": "DOC-0106",
+            "doc_id": "DOC-0106",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0107",
+            "chunk_id": "DOC-0107",
+            "doc_id": "DOC-0107",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0108",
+            "chunk_id": "DOC-0108",
+            "doc_id": "DOC-0108",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.2491079978644848,
+            1.2032800004817545,
+            1.2407920003170148,
+            1.2065880000591278,
+            1.1388969942345284
+          ],
+          "db_ms": [
+            1.6273189976345748,
+            1.5808050011401065,
+            1.6587310019531287,
+            1.6598889997112565,
+            1.5514249971602112
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-015",
+        "query": "Does requesting a credit limit increase over 50% trigger a hard credit inquiry?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0065",
+          "document:DOC-0114",
+          "document:DOC-0110",
+          "document:DOC-0066",
+          "document:DOC-0115",
+          "document:DOC-0150",
+          "document:DOC-0106",
+          "document:DOC-0107",
+          "document:DOC-0108",
+          "document:DOC-0112"
+        ],
+        "doc_ids": [
+          "DOC-0065",
+          "DOC-0114",
+          "DOC-0110",
+          "DOC-0066",
+          "DOC-0115",
+          "DOC-0150",
+          "DOC-0106",
+          "DOC-0107",
+          "DOC-0108",
+          "DOC-0112"
+        ],
+        "gold_ranks": {
+          "DOC-0065": 1
+        },
+        "top_score": 8.6,
+        "hits": [
+          {
+            "key": "document:DOC-0065",
+            "chunk_id": "DOC-0065",
+            "doc_id": "DOC-0065",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.6,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0114",
+            "chunk_id": "DOC-0114",
+            "doc_id": "DOC-0114",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.4,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0110",
+            "chunk_id": "DOC-0110",
+            "doc_id": "DOC-0110",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.2,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0066",
+            "chunk_id": "DOC-0066",
+            "doc_id": "DOC-0066",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.0,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0115",
+            "chunk_id": "DOC-0115",
+            "doc_id": "DOC-0115",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.0,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0150",
+            "chunk_id": "DOC-0150",
+            "doc_id": "DOC-0150",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.8,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0106",
+            "chunk_id": "DOC-0106",
+            "doc_id": "DOC-0106",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0107",
+            "chunk_id": "DOC-0107",
+            "doc_id": "DOC-0107",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0108",
+            "chunk_id": "DOC-0108",
+            "doc_id": "DOC-0108",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0112",
+            "chunk_id": "DOC-0112",
+            "doc_id": "DOC-0112",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.1733930004993454,
+            1.1778469997807406,
+            1.322788004472386,
+            1.112203004595358,
+            1.1988299957010895
+          ],
+          "db_ms": [
+            1.5714559995103627,
+            1.5835890008020215,
+            1.7904279957292601,
+            1.5031750008347444,
+            1.6146999987540767
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-016",
+        "query": "What is the fee for adding authorized users to an Apex Platinum card?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0031",
+          "document:DOC-0076",
+          "document:DOC-0084",
+          "document:DOC-0035",
+          "document:DOC-0077",
+          "document:DOC-0078",
+          "document:DOC-0039",
+          "document:DOC-0043",
+          "document:DOC-0061",
+          "document:DOC-0073"
+        ],
+        "doc_ids": [
+          "DOC-0031",
+          "DOC-0076",
+          "DOC-0084",
+          "DOC-0035",
+          "DOC-0077",
+          "DOC-0078",
+          "DOC-0039",
+          "DOC-0043",
+          "DOC-0061",
+          "DOC-0073"
+        ],
+        "gold_ranks": {
+          "DOC-0076": 2
+        },
+        "top_score": 10.2,
+        "hits": [
+          {
+            "key": "document:DOC-0031",
+            "chunk_id": "DOC-0031",
+            "doc_id": "DOC-0031",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 10.2,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0076",
+            "chunk_id": "DOC-0076",
+            "doc_id": "DOC-0076",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.6,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0084",
+            "chunk_id": "DOC-0084",
+            "doc_id": "DOC-0084",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.8,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0035",
+            "chunk_id": "DOC-0035",
+            "doc_id": "DOC-0035",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.6,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0077",
+            "chunk_id": "DOC-0077",
+            "doc_id": "DOC-0077",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.2,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0078",
+            "chunk_id": "DOC-0078",
+            "doc_id": "DOC-0078",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.6,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0039",
+            "chunk_id": "DOC-0039",
+            "doc_id": "DOC-0039",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0043",
+            "chunk_id": "DOC-0043",
+            "doc_id": "DOC-0043",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0061",
+            "chunk_id": "DOC-0061",
+            "doc_id": "DOC-0061",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.2,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0073",
+            "chunk_id": "DOC-0073",
+            "doc_id": "DOC-0073",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            2.154371002689004,
+            1.7002469976432621,
+            1.7059829988284037,
+            1.6837329967529513,
+            1.6951920042629354
+          ],
+          "db_ms": [
+            2.6268900037393905,
+            2.4165069989976473,
+            2.270797995151952,
+            2.08661599754123,
+            2.115107999998145
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-017",
+        "query": "Is there a fee for adding an authorized user on Apex Everyday Freedom?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0077",
+          "document:DOC-0033",
+          "document:DOC-0037",
+          "document:DOC-0044",
+          "document:DOC-0085",
+          "document:DOC-0075",
+          "document:DOC-0041",
+          "document:DOC-0048",
+          "document:DOC-0056",
+          "document:DOC-0082"
+        ],
+        "doc_ids": [
+          "DOC-0077",
+          "DOC-0033",
+          "DOC-0037",
+          "DOC-0044",
+          "DOC-0085",
+          "DOC-0075",
+          "DOC-0041",
+          "DOC-0048",
+          "DOC-0056",
+          "DOC-0082"
+        ],
+        "gold_ranks": {
+          "DOC-0077": 1
+        },
+        "top_score": 13.0,
+        "hits": [
+          {
+            "key": "document:DOC-0077",
+            "chunk_id": "DOC-0077",
+            "doc_id": "DOC-0077",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 13.0,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0033",
+            "chunk_id": "DOC-0033",
+            "doc_id": "DOC-0033",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 11.4,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0037",
+            "chunk_id": "DOC-0037",
+            "doc_id": "DOC-0037",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 11.0,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0044",
+            "chunk_id": "DOC-0044",
+            "doc_id": "DOC-0044",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.8,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0085",
+            "chunk_id": "DOC-0085",
+            "doc_id": "DOC-0085",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.2,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0075",
+            "chunk_id": "DOC-0075",
+            "doc_id": "DOC-0075",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.0,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0041",
+            "chunk_id": "DOC-0041",
+            "doc_id": "DOC-0041",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.8,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0048",
+            "chunk_id": "DOC-0048",
+            "doc_id": "DOC-0048",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.8,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0056",
+            "chunk_id": "DOC-0056",
+            "doc_id": "DOC-0056",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.8,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0082",
+            "chunk_id": "DOC-0082",
+            "doc_id": "DOC-0082",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.8,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.6714360026526265,
+            2.006160000746604,
+            1.615584005776327,
+            2.0470199960982427,
+            1.6392850011470728
+          ],
+          "db_ms": [
+            2.0874039983027615,
+            2.4476489998050965,
+            2.0417329942574725,
+            2.634313997987192,
+            2.1484789976966567
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-018",
+        "query": "What rental car collision insurance is provided by Apex Platinum?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0094",
+          "document:DOC-0091",
+          "document:DOC-0095",
+          "document:DOC-0096",
+          "document:DOC-0050",
+          "document:DOC-0031",
+          "document:DOC-0035",
+          "document:DOC-0046",
+          "document:DOC-0061",
+          "document:DOC-0101"
+        ],
+        "doc_ids": [
+          "DOC-0094",
+          "DOC-0091",
+          "DOC-0095",
+          "DOC-0096",
+          "DOC-0050",
+          "DOC-0031",
+          "DOC-0035",
+          "DOC-0046",
+          "DOC-0061",
+          "DOC-0101"
+        ],
+        "gold_ranks": {
+          "DOC-0094": 1
+        },
+        "top_score": 9.6,
+        "hits": [
+          {
+            "key": "document:DOC-0094",
+            "chunk_id": "DOC-0094",
+            "doc_id": "DOC-0094",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.6,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0091",
+            "chunk_id": "DOC-0091",
+            "doc_id": "DOC-0091",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0095",
+            "chunk_id": "DOC-0095",
+            "doc_id": "DOC-0095",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0096",
+            "chunk_id": "DOC-0096",
+            "doc_id": "DOC-0096",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0050",
+            "chunk_id": "DOC-0050",
+            "doc_id": "DOC-0050",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.4,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0031",
+            "chunk_id": "DOC-0031",
+            "doc_id": "DOC-0031",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.0,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0035",
+            "chunk_id": "DOC-0035",
+            "doc_id": "DOC-0035",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.0,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0046",
+            "chunk_id": "DOC-0046",
+            "doc_id": "DOC-0046",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.0,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0061",
+            "chunk_id": "DOC-0061",
+            "doc_id": "DOC-0061",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.0,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0101",
+            "chunk_id": "DOC-0101",
+            "doc_id": "DOC-0101",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.0,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.6923319999477826,
+            1.9536440013325773,
+            1.7550580014358275,
+            1.8110250020981766,
+            1.921057999425102
+          ],
+          "db_ms": [
+            2.111846006300766,
+            2.463202996295877,
+            2.3035679987515323,
+            2.3875519982539117,
+            2.372173003095668
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-019",
+        "query": "What is the annual flight and hotel statement credit on Apex Platinum?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0058",
+          "document:DOC-0031",
+          "document:DOC-0024",
+          "document:DOC-0059",
+          "document:DOC-0060",
+          "document:DOC-0065",
+          "document:DOC-0106",
+          "document:DOC-0110",
+          "document:DOC-0136",
+          "document:DOC-0050"
+        ],
+        "doc_ids": [
+          "DOC-0058",
+          "DOC-0031",
+          "DOC-0024",
+          "DOC-0059",
+          "DOC-0060",
+          "DOC-0065",
+          "DOC-0106",
+          "DOC-0110",
+          "DOC-0136",
+          "DOC-0050"
+        ],
+        "gold_ranks": {
+          "DOC-0058": 1
+        },
+        "top_score": 9.2,
+        "hits": [
+          {
+            "key": "document:DOC-0058",
+            "chunk_id": "DOC-0058",
+            "doc_id": "DOC-0058",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.2,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0031",
+            "chunk_id": "DOC-0031",
+            "doc_id": "DOC-0031",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.8,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0024",
+            "chunk_id": "DOC-0024",
+            "doc_id": "DOC-0024",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0059",
+            "chunk_id": "DOC-0059",
+            "doc_id": "DOC-0059",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0060",
+            "chunk_id": "DOC-0060",
+            "doc_id": "DOC-0060",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0065",
+            "chunk_id": "DOC-0065",
+            "doc_id": "DOC-0065",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0106",
+            "chunk_id": "DOC-0106",
+            "doc_id": "DOC-0106",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0110",
+            "chunk_id": "DOC-0110",
+            "doc_id": "DOC-0110",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0136",
+            "chunk_id": "DOC-0136",
+            "doc_id": "DOC-0136",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0050",
+            "chunk_id": "DOC-0050",
+            "doc_id": "DOC-0050",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.2,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.785744992957916,
+            1.7184589960379526,
+            1.7081440018955618,
+            1.735366000502836,
+            1.690789998974651
+          ],
+          "db_ms": [
+            2.2452030025306158,
+            2.15254099748563,
+            2.1494009997695684,
+            2.138399999239482,
+            2.0432089950190857
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-020",
+        "query": "What is the trip delay reimbursement policy threshold and amount for Apex Platinum?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0099",
+          "document:DOC-0091",
+          "document:DOC-0016",
+          "document:DOC-0097",
+          "document:DOC-0110",
+          "document:DOC-0050",
+          "document:DOC-0120",
+          "document:DOC-0005",
+          "document:DOC-0013",
+          "document:DOC-0031"
+        ],
+        "doc_ids": [
+          "DOC-0099",
+          "DOC-0091",
+          "DOC-0016",
+          "DOC-0097",
+          "DOC-0110",
+          "DOC-0050",
+          "DOC-0120",
+          "DOC-0005",
+          "DOC-0013",
+          "DOC-0031"
+        ],
+        "gold_ranks": {
+          "DOC-0099": 1
+        },
+        "top_score": 10.4,
+        "hits": [
+          {
+            "key": "document:DOC-0099",
+            "chunk_id": "DOC-0099",
+            "doc_id": "DOC-0099",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 10.4,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0091",
+            "chunk_id": "DOC-0091",
+            "doc_id": "DOC-0091",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.2,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0016",
+            "chunk_id": "DOC-0016",
+            "doc_id": "DOC-0016",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0097",
+            "chunk_id": "DOC-0097",
+            "doc_id": "DOC-0097",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0110",
+            "chunk_id": "DOC-0110",
+            "doc_id": "DOC-0110",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0050",
+            "chunk_id": "DOC-0050",
+            "doc_id": "DOC-0050",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.2,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0120",
+            "chunk_id": "DOC-0120",
+            "doc_id": "DOC-0120",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0005",
+            "chunk_id": "DOC-0005",
+            "doc_id": "DOC-0005",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0013",
+            "chunk_id": "DOC-0013",
+            "doc_id": "DOC-0013",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0031",
+            "chunk_id": "DOC-0031",
+            "doc_id": "DOC-0031",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.9010040050488897,
+            1.998011997784488,
+            2.049255999736488,
+            1.9453319982858375,
+            1.8701259978115559
+          ],
+          "db_ms": [
+            2.371709000726696,
+            2.4333659966941923,
+            2.4357200018130243,
+            2.391036003245972,
+            2.251612997497432
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-021",
+        "query": "What foreign transaction fee applies to the Apex Everyday Freedom card?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0037",
+          "document:DOC-0033",
+          "document:DOC-0044",
+          "document:DOC-0070",
+          "document:DOC-0063",
+          "document:DOC-0075",
+          "document:DOC-0041",
+          "document:DOC-0056",
+          "document:DOC-0093",
+          "document:DOC-0035"
+        ],
+        "doc_ids": [
+          "DOC-0037",
+          "DOC-0033",
+          "DOC-0044",
+          "DOC-0070",
+          "DOC-0063",
+          "DOC-0075",
+          "DOC-0041",
+          "DOC-0056",
+          "DOC-0093",
+          "DOC-0035"
+        ],
+        "gold_ranks": {
+          "DOC-0037": 1
+        },
+        "top_score": 14.6,
+        "hits": [
+          {
+            "key": "document:DOC-0037",
+            "chunk_id": "DOC-0037",
+            "doc_id": "DOC-0037",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 14.6,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0033",
+            "chunk_id": "DOC-0033",
+            "doc_id": "DOC-0033",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 11.8,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0044",
+            "chunk_id": "DOC-0044",
+            "doc_id": "DOC-0044",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.8,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0070",
+            "chunk_id": "DOC-0070",
+            "doc_id": "DOC-0070",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.8,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0063",
+            "chunk_id": "DOC-0063",
+            "doc_id": "DOC-0063",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.4,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0075",
+            "chunk_id": "DOC-0075",
+            "doc_id": "DOC-0075",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.4,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0041",
+            "chunk_id": "DOC-0041",
+            "doc_id": "DOC-0041",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.2,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0056",
+            "chunk_id": "DOC-0056",
+            "doc_id": "DOC-0056",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.2,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0093",
+            "chunk_id": "DOC-0093",
+            "doc_id": "DOC-0093",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.2,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0035",
+            "chunk_id": "DOC-0035",
+            "doc_id": "DOC-0035",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.0,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.9770959988818504,
+            2.0077199951629154,
+            1.8724569963524118,
+            1.8562010009191,
+            1.8086709969793446
+          ],
+          "db_ms": [
+            2.4608050007373095,
+            2.3840380017645657,
+            2.2821370002930053,
+            2.2159389991429634,
+            2.2441160035668872
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-022",
+        "query": "What is the cash advance APR and fee on Apex Platinum?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0043",
+          "document:DOC-0031",
+          "document:DOC-0035",
+          "document:DOC-0001",
+          "document:DOC-0039",
+          "document:DOC-0061",
+          "document:DOC-0050",
+          "document:DOC-0032",
+          "document:DOC-0033",
+          "document:DOC-0013"
+        ],
+        "doc_ids": [
+          "DOC-0043",
+          "DOC-0031",
+          "DOC-0035",
+          "DOC-0001",
+          "DOC-0039",
+          "DOC-0061",
+          "DOC-0050",
+          "DOC-0032",
+          "DOC-0033",
+          "DOC-0013"
+        ],
+        "gold_ranks": {
+          "DOC-0043": 1
+        },
+        "top_score": 12.8,
+        "hits": [
+          {
+            "key": "document:DOC-0043",
+            "chunk_id": "DOC-0043",
+            "doc_id": "DOC-0043",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 12.8,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0031",
+            "chunk_id": "DOC-0031",
+            "doc_id": "DOC-0031",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.8,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0035",
+            "chunk_id": "DOC-0035",
+            "doc_id": "DOC-0035",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.6,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0001",
+            "chunk_id": "DOC-0001",
+            "doc_id": "DOC-0001",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.8,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0039",
+            "chunk_id": "DOC-0039",
+            "doc_id": "DOC-0039",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.8,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0061",
+            "chunk_id": "DOC-0061",
+            "doc_id": "DOC-0061",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0050",
+            "chunk_id": "DOC-0050",
+            "doc_id": "DOC-0050",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0032",
+            "chunk_id": "DOC-0032",
+            "doc_id": "DOC-0032",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.2,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0033",
+            "chunk_id": "DOC-0033",
+            "doc_id": "DOC-0033",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.2,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0013",
+            "chunk_id": "DOC-0013",
+            "doc_id": "DOC-0013",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.0,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.5447289988514967,
+            1.4751140042790212,
+            1.5672770023229532,
+            1.4414480028790422,
+            1.6294820015900768
+          ],
+          "db_ms": [
+            1.9862670014845207,
+            1.9361149970791303,
+            1.9780009970418178,
+            1.79618300171569,
+            2.1814009960507974
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-023",
+        "query": "Are corporate employee phones covered under Apex Business Select cell phone protection?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0057",
+          "document:DOC-0030",
+          "document:DOC-0126",
+          "document:DOC-0068",
+          "document:DOC-0079",
+          "document:DOC-0087",
+          "document:DOC-0121",
+          "document:DOC-0132",
+          "document:DOC-0027",
+          "document:DOC-0124"
+        ],
+        "doc_ids": [
+          "DOC-0057",
+          "DOC-0030",
+          "DOC-0126",
+          "DOC-0068",
+          "DOC-0079",
+          "DOC-0087",
+          "DOC-0121",
+          "DOC-0132",
+          "DOC-0027",
+          "DOC-0124"
+        ],
+        "gold_ranks": {
+          "DOC-0057": 1
+        },
+        "top_score": 12.6,
+        "hits": [
+          {
+            "key": "document:DOC-0057",
+            "chunk_id": "DOC-0057",
+            "doc_id": "DOC-0057",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 12.6,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0030",
+            "chunk_id": "DOC-0030",
+            "doc_id": "DOC-0030",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 10.2,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0126",
+            "chunk_id": "DOC-0126",
+            "doc_id": "DOC-0126",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 10.2,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0068",
+            "chunk_id": "DOC-0068",
+            "doc_id": "DOC-0068",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.4,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0079",
+            "chunk_id": "DOC-0079",
+            "doc_id": "DOC-0079",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.4,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0087",
+            "chunk_id": "DOC-0087",
+            "doc_id": "DOC-0087",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.4,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0121",
+            "chunk_id": "DOC-0121",
+            "doc_id": "DOC-0121",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.4,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0132",
+            "chunk_id": "DOC-0132",
+            "doc_id": "DOC-0132",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.4,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0027",
+            "chunk_id": "DOC-0027",
+            "doc_id": "DOC-0027",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.0,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0124",
+            "chunk_id": "DOC-0124",
+            "doc_id": "DOC-0124",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.0,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            2.7669170012813993,
+            2.323364002222661,
+            2.2002580008120276,
+            2.2294320006039925,
+            2.2060460032662377
+          ],
+          "db_ms": [
+            3.220635997422505,
+            2.739709998422768,
+            2.6586160020087846,
+            2.6372630018158816,
+            2.6132109996979125
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-024",
+        "query": "Can virtual card numbers be generated with custom spending limits on Apex Platinum?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0073",
+          "document:DOC-0114",
+          "document:DOC-0065",
+          "document:DOC-0061",
+          "document:DOC-0110",
+          "document:DOC-0117",
+          "document:DOC-0013",
+          "document:DOC-0028",
+          "document:DOC-0121",
+          "document:DOC-0136"
+        ],
+        "doc_ids": [
+          "DOC-0073",
+          "DOC-0114",
+          "DOC-0065",
+          "DOC-0061",
+          "DOC-0110",
+          "DOC-0117",
+          "DOC-0013",
+          "DOC-0028",
+          "DOC-0121",
+          "DOC-0136"
+        ],
+        "gold_ranks": {
+          "DOC-0073": 1
+        },
+        "top_score": 12.0,
+        "hits": [
+          {
+            "key": "document:DOC-0073",
+            "chunk_id": "DOC-0073",
+            "doc_id": "DOC-0073",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 12.0,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0114",
+            "chunk_id": "DOC-0114",
+            "doc_id": "DOC-0114",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.2,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0065",
+            "chunk_id": "DOC-0065",
+            "doc_id": "DOC-0065",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0061",
+            "chunk_id": "DOC-0061",
+            "doc_id": "DOC-0061",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.2,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0110",
+            "chunk_id": "DOC-0110",
+            "doc_id": "DOC-0110",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0117",
+            "chunk_id": "DOC-0117",
+            "doc_id": "DOC-0117",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0013",
+            "chunk_id": "DOC-0013",
+            "doc_id": "DOC-0013",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.6,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0028",
+            "chunk_id": "DOC-0028",
+            "doc_id": "DOC-0028",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.6,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0121",
+            "chunk_id": "DOC-0121",
+            "doc_id": "DOC-0121",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.6,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0136",
+            "chunk_id": "DOC-0136",
+            "doc_id": "DOC-0136",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.6,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            2.0969230026821606,
+            2.044814005785156,
+            2.065371001663152,
+            2.083828003378585,
+            2.0466849964577705
+          ],
+          "db_ms": [
+            2.5535990062053315,
+            2.507731995137874,
+            2.4664249940542504,
+            2.464021003106609,
+            2.4666809986229055
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-025",
+        "query": "What happens if a provisional credit investigation resolves in favor of the merchant?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0024",
+          "document:DOC-0025",
+          "document:DOC-0027",
+          "document:DOC-0065",
+          "document:DOC-0106",
+          "document:DOC-0107",
+          "document:DOC-0108",
+          "document:DOC-0020",
+          "document:DOC-0026",
+          "document:DOC-0058"
+        ],
+        "doc_ids": [
+          "DOC-0024",
+          "DOC-0025",
+          "DOC-0027",
+          "DOC-0065",
+          "DOC-0106",
+          "DOC-0107",
+          "DOC-0108",
+          "DOC-0020",
+          "DOC-0026",
+          "DOC-0058"
+        ],
+        "gold_ranks": {
+          "DOC-0024": 1
+        },
+        "top_score": 5.6,
+        "hits": [
+          {
+            "key": "document:DOC-0024",
+            "chunk_id": "DOC-0024",
+            "doc_id": "DOC-0024",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 5.6,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0025",
+            "chunk_id": "DOC-0025",
+            "doc_id": "DOC-0025",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.2,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0027",
+            "chunk_id": "DOC-0027",
+            "doc_id": "DOC-0027",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.8,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0065",
+            "chunk_id": "DOC-0065",
+            "doc_id": "DOC-0065",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.2,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0106",
+            "chunk_id": "DOC-0106",
+            "doc_id": "DOC-0106",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.2,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0107",
+            "chunk_id": "DOC-0107",
+            "doc_id": "DOC-0107",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.2,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0108",
+            "chunk_id": "DOC-0108",
+            "doc_id": "DOC-0108",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.2,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0020",
+            "chunk_id": "DOC-0020",
+            "doc_id": "DOC-0020",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.8,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0026",
+            "chunk_id": "DOC-0026",
+            "doc_id": "DOC-0026",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.8,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0058",
+            "chunk_id": "DOC-0058",
+            "doc_id": "DOC-0058",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.8,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.0708100016927347,
+            0.9538859958411194,
+            0.9073719993466511,
+            0.9128769961534999,
+            0.947528998949565
+          ],
+          "db_ms": [
+            1.487819004978519,
+            1.4070060060475953,
+            1.3015020012971945,
+            1.3383289988269098,
+            1.339157999609597
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-026",
+        "query": "What is the maximum emergency cash disbursement amount available abroad for Platinum holders?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0061",
+          "document:DOC-0043",
+          "document:DOC-0101",
+          "document:DOC-0090",
+          "document:DOC-0005",
+          "document:DOC-0050",
+          "document:DOC-0009",
+          "document:DOC-0013",
+          "document:DOC-0024",
+          "document:DOC-0031"
+        ],
+        "doc_ids": [
+          "DOC-0061",
+          "DOC-0043",
+          "DOC-0101",
+          "DOC-0090",
+          "DOC-0005",
+          "DOC-0050",
+          "DOC-0009",
+          "DOC-0013",
+          "DOC-0024",
+          "DOC-0031"
+        ],
+        "gold_ranks": {
+          "DOC-0061": 1
+        },
+        "top_score": 8.2,
+        "hits": [
+          {
+            "key": "document:DOC-0061",
+            "chunk_id": "DOC-0061",
+            "doc_id": "DOC-0061",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.2,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0043",
+            "chunk_id": "DOC-0043",
+            "doc_id": "DOC-0043",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 4.2,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0101",
+            "chunk_id": "DOC-0101",
+            "doc_id": "DOC-0101",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 4.2,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0090",
+            "chunk_id": "DOC-0090",
+            "doc_id": "DOC-0090",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.4,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0005",
+            "chunk_id": "DOC-0005",
+            "doc_id": "DOC-0005",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.2,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0050",
+            "chunk_id": "DOC-0050",
+            "doc_id": "DOC-0050",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.2,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0009",
+            "chunk_id": "DOC-0009",
+            "doc_id": "DOC-0009",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.8,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0013",
+            "chunk_id": "DOC-0013",
+            "doc_id": "DOC-0013",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.8,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0024",
+            "chunk_id": "DOC-0024",
+            "doc_id": "DOC-0024",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.8,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0031",
+            "chunk_id": "DOC-0031",
+            "doc_id": "DOC-0031",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.8,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.3066999963484704,
+            1.2413590011419728,
+            1.1873320036102086,
+            1.332156993157696,
+            1.1790389980887994
+          ],
+          "db_ms": [
+            1.6514329981873743,
+            1.7369359993608668,
+            1.5268069982994348,
+            1.7796440006350167,
+            1.5855359961278737
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-027",
+        "query": "What is the minimum credit line issued for an Apex Platinum account?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0106",
+          "document:DOC-0065",
+          "document:DOC-0110",
+          "document:DOC-0024",
+          "document:DOC-0084",
+          "document:DOC-0086",
+          "document:DOC-0050",
+          "document:DOC-0058",
+          "document:DOC-0060",
+          "document:DOC-0147"
+        ],
+        "doc_ids": [
+          "DOC-0106",
+          "DOC-0065",
+          "DOC-0110",
+          "DOC-0024",
+          "DOC-0084",
+          "DOC-0086",
+          "DOC-0050",
+          "DOC-0058",
+          "DOC-0060",
+          "DOC-0147"
+        ],
+        "gold_ranks": {
+          "DOC-0106": 1
+        },
+        "top_score": 9.2,
+        "hits": [
+          {
+            "key": "document:DOC-0106",
+            "chunk_id": "DOC-0106",
+            "doc_id": "DOC-0106",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.2,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0065",
+            "chunk_id": "DOC-0065",
+            "doc_id": "DOC-0065",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.6,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0110",
+            "chunk_id": "DOC-0110",
+            "doc_id": "DOC-0110",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.6,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0024",
+            "chunk_id": "DOC-0024",
+            "doc_id": "DOC-0024",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.8,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0084",
+            "chunk_id": "DOC-0084",
+            "doc_id": "DOC-0084",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0086",
+            "chunk_id": "DOC-0086",
+            "doc_id": "DOC-0086",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0050",
+            "chunk_id": "DOC-0050",
+            "doc_id": "DOC-0050",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.2,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0058",
+            "chunk_id": "DOC-0058",
+            "doc_id": "DOC-0058",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0060",
+            "chunk_id": "DOC-0060",
+            "doc_id": "DOC-0060",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0147",
+            "chunk_id": "DOC-0147",
+            "doc_id": "DOC-0147",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.0,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.7085509971366264,
+            1.7866899943328463,
+            1.708794996375218,
+            1.6411430042353459,
+            1.7143389995908365
+          ],
+          "db_ms": [
+            2.094879004289396,
+            2.1661270002368838,
+            2.1453289955388755,
+            2.0140980050200596,
+            2.131234999978915
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-028",
+        "query": "How often can I change my payment due date on Apex Everyday Freedom?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0149",
+          "document:DOC-0044",
+          "document:DOC-0041",
+          "document:DOC-0142",
+          "document:DOC-0033",
+          "document:DOC-0037",
+          "document:DOC-0048",
+          "document:DOC-0056",
+          "document:DOC-0093",
+          "document:DOC-0052"
+        ],
+        "doc_ids": [
+          "DOC-0149",
+          "DOC-0044",
+          "DOC-0041",
+          "DOC-0142",
+          "DOC-0033",
+          "DOC-0037",
+          "DOC-0048",
+          "DOC-0056",
+          "DOC-0093",
+          "DOC-0052"
+        ],
+        "gold_ranks": {
+          "DOC-0149": 1
+        },
+        "top_score": 12.2,
+        "hits": [
+          {
+            "key": "document:DOC-0149",
+            "chunk_id": "DOC-0149",
+            "doc_id": "DOC-0149",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 12.2,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0044",
+            "chunk_id": "DOC-0044",
+            "doc_id": "DOC-0044",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.4,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0041",
+            "chunk_id": "DOC-0041",
+            "doc_id": "DOC-0041",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.0,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0142",
+            "chunk_id": "DOC-0142",
+            "doc_id": "DOC-0142",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.0,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0033",
+            "chunk_id": "DOC-0033",
+            "doc_id": "DOC-0033",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.8,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0037",
+            "chunk_id": "DOC-0037",
+            "doc_id": "DOC-0037",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.8,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0048",
+            "chunk_id": "DOC-0048",
+            "doc_id": "DOC-0048",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.8,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0056",
+            "chunk_id": "DOC-0056",
+            "doc_id": "DOC-0056",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.8,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0093",
+            "chunk_id": "DOC-0093",
+            "doc_id": "DOC-0093",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.8,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0052",
+            "chunk_id": "DOC-0052",
+            "doc_id": "DOC-0052",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.4,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.9530979989212938,
+            1.961253998160828,
+            1.8675719984457828,
+            1.881821001006756,
+            2.071672002784908
+          ],
+          "db_ms": [
+            2.3830440040910617,
+            2.498797002772335,
+            2.2443330017267726,
+            2.257367996207904,
+            2.450004998536315
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-029",
+        "query": "Does Apex Preferred Travel offer Global Entry or TSA PreCheck application fee credits?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0032",
+          "document:DOC-0060",
+          "document:DOC-0036",
+          "document:DOC-0040",
+          "document:DOC-0059",
+          "document:DOC-0107",
+          "document:DOC-0111",
+          "document:DOC-0025",
+          "document:DOC-0066",
+          "document:DOC-0072"
+        ],
+        "doc_ids": [
+          "DOC-0032",
+          "DOC-0060",
+          "DOC-0036",
+          "DOC-0040",
+          "DOC-0059",
+          "DOC-0107",
+          "DOC-0111",
+          "DOC-0025",
+          "DOC-0066",
+          "DOC-0072"
+        ],
+        "gold_ranks": {
+          "DOC-0060": 2
+        },
+        "top_score": 11.0,
+        "hits": [
+          {
+            "key": "document:DOC-0032",
+            "chunk_id": "DOC-0032",
+            "doc_id": "DOC-0032",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 11.0,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0060",
+            "chunk_id": "DOC-0060",
+            "doc_id": "DOC-0060",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 11.0,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0036",
+            "chunk_id": "DOC-0036",
+            "doc_id": "DOC-0036",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 10.4,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0040",
+            "chunk_id": "DOC-0040",
+            "doc_id": "DOC-0040",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 10.2,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0059",
+            "chunk_id": "DOC-0059",
+            "doc_id": "DOC-0059",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 10.2,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0107",
+            "chunk_id": "DOC-0107",
+            "doc_id": "DOC-0107",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 10.2,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0111",
+            "chunk_id": "DOC-0111",
+            "doc_id": "DOC-0111",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.8,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0025",
+            "chunk_id": "DOC-0025",
+            "doc_id": "DOC-0025",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.4,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0066",
+            "chunk_id": "DOC-0066",
+            "doc_id": "DOC-0066",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.4,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0072",
+            "chunk_id": "DOC-0072",
+            "doc_id": "DOC-0072",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 9.4,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            2.5173829999403097,
+            2.4556550051784143,
+            2.3102500053937547,
+            2.608366994536482,
+            2.3128550019464456
+          ],
+          "db_ms": [
+            2.899737999541685,
+            2.78340200020466,
+            2.7571159953367896,
+            3.0827089940430596,
+            2.708859996346291
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      {
+        "query_id": "Q-030",
+        "query": "What is the interest grace period duration on purchase balances for Apex Platinum?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0039",
+          "document:DOC-0001",
+          "document:DOC-0009",
+          "document:DOC-0138",
+          "document:DOC-0150",
+          "document:DOC-0005",
+          "document:DOC-0013",
+          "document:DOC-0035",
+          "document:DOC-0136",
+          "document:DOC-0140"
+        ],
+        "doc_ids": [
+          "DOC-0039",
+          "DOC-0001",
+          "DOC-0009",
+          "DOC-0138",
+          "DOC-0150",
+          "DOC-0005",
+          "DOC-0013",
+          "DOC-0035",
+          "DOC-0136",
+          "DOC-0140"
+        ],
+        "gold_ranks": {
+          "DOC-0039": 1
+        },
+        "top_score": 10.0,
+        "hits": [
+          {
+            "key": "document:DOC-0039",
+            "chunk_id": "DOC-0039",
+            "doc_id": "DOC-0039",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 10.0,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0001",
+            "chunk_id": "DOC-0001",
+            "doc_id": "DOC-0001",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.6,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0009",
+            "chunk_id": "DOC-0009",
+            "doc_id": "DOC-0009",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.6,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0138",
+            "chunk_id": "DOC-0138",
+            "doc_id": "DOC-0138",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.6,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0150",
+            "chunk_id": "DOC-0150",
+            "doc_id": "DOC-0150",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.8,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0005",
+            "chunk_id": "DOC-0005",
+            "doc_id": "DOC-0005",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0013",
+            "chunk_id": "DOC-0013",
+            "doc_id": "DOC-0013",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0035",
+            "chunk_id": "DOC-0035",
+            "doc_id": "DOC-0035",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0136",
+            "chunk_id": "DOC-0136",
+            "doc_id": "DOC-0136",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0140",
+            "chunk_id": "DOC-0140",
+            "doc_id": "DOC-0140",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 6.8,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.9009640018339269,
+            1.8693620004341938,
+            1.84056100260932,
+            2.2290199995040894,
+            1.9018929961021058
+          ],
+          "db_ms": [
+            2.4335519992746413,
+            2.303537003172096,
+            2.223700998001732,
+            2.6209460047539324,
+            2.358637997531332
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      }
+    ],
+    "quality": {
+      "evaluated_queries": 30,
+      "missing_queries": 0,
+      "semantic_recall_mean": 1.0,
+      "semantic_recall_min": 1.0,
+      "semantic_recall_max": 1.0,
+      "empty_result_queries": 0,
+      "empty_result_rate": 0.0,
+      "shortfall_queries": 0,
+      "overflow_queries": 0,
+      "duplicate_result_queries": 0,
+      "perfect_recall_queries": 30,
+      "zero_recall_queries": 0
+    },
+    "latency": {
+      "query_ms": {
+        "n": 150,
+        "min": 0.7094120010151528,
+        "p50": 1.855784998042509,
+        "p95": 2.323364002222661,
+        "p99": 2.7669170012813993,
+        "max": 4.11379700381076,
+        "mean": 1.734244413091801
+      },
+      "db_ms": {
+        "n": 150,
+        "min": 1.0873790015466511,
+        "p50": 2.270797995151952,
+        "p95": 2.8192309982841834,
+        "p99": 3.220635997422505,
+        "max": 4.650992996175773,
+        "mean": 2.179865053136988
+      },
+      "query_ms_samples": [
+        2.215996995801106,
+        2.208630998211447,
+        2.1348399968701415,
+        4.11379700381076,
+        2.0796949975192547,
+        1.2171990019851364,
+        1.2189259941806085,
+        1.1872649993165396,
+        1.434036996215582,
+        1.2896760017611086,
+        1.8848639956559055,
+        1.879192997876089,
+        1.8993109988514334,
+        1.9650739995995536,
+        2.0822959995712154,
+        1.845508006226737,
+        1.8581339973025024,
+        1.780480997695122,
+        2.210393999121152,
+        2.1085979969939217,
+        0.7709999990765937,
+        0.7229990005725995,
+        0.7094120010151528,
+        0.7493380035157315,
+        0.7400429967674427,
+        0.9204430025420152,
+        0.9763319976627827,
+        0.8946180023485795,
+        0.8639700026833452,
+        0.8929760006139986,
+        2.4039659983827733,
+        2.2398310029529966,
+        2.2665779979433864,
+        2.251300997158978,
+        2.2467430026154034,
+        2.2281240017036907,
+        2.278220003063325,
+        2.372442999330815,
+        2.170550993469078,
+        2.2062470015953295,
+        0.8949430048232898,
+        0.8895749997464009,
+        0.8036290018935688,
+        0.7812050025677308,
+        0.8834889958961867,
+        2.09362999885343,
+        2.077662000374403,
+        2.1129999950062484,
+        2.068351001071278,
+        2.048408998234663,
+        1.6106879993458278,
+        1.6896969973458908,
+        1.5801029949216172,
+        1.7951140034710988,
+        1.5951829991536215,
+        1.9563759997254238,
+        1.8950369994854555,
+        1.9459300019661896,
+        1.9013489945791662,
+        1.855784998042509,
+        2.0490089955274016,
+        2.0541070043691434,
+        2.01745200320147,
+        2.0074429994565435,
+        2.0082179980818182,
+        1.2491079978644848,
+        1.2032800004817545,
+        1.2407920003170148,
+        1.2065880000591278,
+        1.1388969942345284,
+        1.1733930004993454,
+        1.1778469997807406,
+        1.322788004472386,
+        1.112203004595358,
+        1.1988299957010895,
+        2.154371002689004,
+        1.7002469976432621,
+        1.7059829988284037,
+        1.6837329967529513,
+        1.6951920042629354,
+        1.6714360026526265,
+        2.006160000746604,
+        1.615584005776327,
+        2.0470199960982427,
+        1.6392850011470728,
+        1.6923319999477826,
+        1.9536440013325773,
+        1.7550580014358275,
+        1.8110250020981766,
+        1.921057999425102,
+        1.785744992957916,
+        1.7184589960379526,
+        1.7081440018955618,
+        1.735366000502836,
+        1.690789998974651,
+        1.9010040050488897,
+        1.998011997784488,
+        2.049255999736488,
+        1.9453319982858375,
+        1.8701259978115559,
+        1.9770959988818504,
+        2.0077199951629154,
+        1.8724569963524118,
+        1.8562010009191,
+        1.8086709969793446,
+        1.5447289988514967,
+        1.4751140042790212,
+        1.5672770023229532,
+        1.4414480028790422,
+        1.6294820015900768,
+        2.7669170012813993,
+        2.323364002222661,
+        2.2002580008120276,
+        2.2294320006039925,
+        2.2060460032662377,
+        2.0969230026821606,
+        2.044814005785156,
+        2.065371001663152,
+        2.083828003378585,
+        2.0466849964577705,
+        1.0708100016927347,
+        0.9538859958411194,
+        0.9073719993466511,
+        0.9128769961534999,
+        0.947528998949565,
+        1.3066999963484704,
+        1.2413590011419728,
+        1.1873320036102086,
+        1.332156993157696,
+        1.1790389980887994,
+        1.7085509971366264,
+        1.7866899943328463,
+        1.708794996375218,
+        1.6411430042353459,
+        1.7143389995908365,
+        1.9530979989212938,
+        1.961253998160828,
+        1.8675719984457828,
+        1.881821001006756,
+        2.071672002784908,
+        2.5173829999403097,
+        2.4556550051784143,
+        2.3102500053937547,
+        2.608366994536482,
+        2.3128550019464456,
+        1.9009640018339269,
+        1.8693620004341938,
+        1.84056100260932,
+        2.2290199995040894,
+        1.9018929961021058
+      ],
+      "db_ms_samples": [
+        3.214769996702671,
+        2.7492590015754104,
+        2.917379002610687,
+        4.650992996175773,
+        2.745316000073217,
+        1.633030995435547,
+        1.6344489995390177,
+        1.5507589996559545,
+        1.9124899990856647,
+        1.8336909997742623,
+        2.3201069998322055,
+        2.2735439997632056,
+        2.300582993484568,
+        2.393434006080497,
+        2.617237994854804,
+        2.3402670049108565,
+        2.316170997801237,
+        2.2300670025288127,
+        2.622533997055143,
+        2.7058690029662102,
+        1.2026670010527596,
+        1.163114000519272,
+        1.0873790015466511,
+        1.230672001838684,
+        1.1491039986140095,
+        1.4436190031119622,
+        1.3777709973510355,
+        1.3040630001341924,
+        1.254397000593599,
+        1.262942998437211,
+        2.8192309982841834,
+        2.651799004524946,
+        2.7746970008593053,
+        2.628260997880716,
+        2.6186280010733753,
+        2.657142002135515,
+        2.6825259992619976,
+        2.9143290012143552,
+        2.5813270040089265,
+        2.633971002069302,
+        1.312815998971928,
+        1.3782019959762692,
+        1.2885850010206923,
+        1.1503249988891184,
+        1.4275170033215545,
+        2.4787349975667894,
+        2.6490969976293854,
+        2.6291109970770776,
+        2.4790399984340183,
+        2.5063439970836043,
+        2.037536003626883,
+        2.2412499965867028,
+        1.9580990046961233,
+        2.1281169974827208,
+        2.0087750017410144,
+        2.3970050024217926,
+        2.2592129971599206,
+        2.3673000032431446,
+        2.2882240009494126,
+        2.3922859982121736,
+        2.4987479991978034,
+        2.5353040036861785,
+        2.491596002073493,
+        2.4581180041423067,
+        2.4467889961670153,
+        1.6273189976345748,
+        1.5808050011401065,
+        1.6587310019531287,
+        1.6598889997112565,
+        1.5514249971602112,
+        1.5714559995103627,
+        1.5835890008020215,
+        1.7904279957292601,
+        1.5031750008347444,
+        1.6146999987540767,
+        2.6268900037393905,
+        2.4165069989976473,
+        2.270797995151952,
+        2.08661599754123,
+        2.115107999998145,
+        2.0874039983027615,
+        2.4476489998050965,
+        2.0417329942574725,
+        2.634313997987192,
+        2.1484789976966567,
+        2.111846006300766,
+        2.463202996295877,
+        2.3035679987515323,
+        2.3875519982539117,
+        2.372173003095668,
+        2.2452030025306158,
+        2.15254099748563,
+        2.1494009997695684,
+        2.138399999239482,
+        2.0432089950190857,
+        2.371709000726696,
+        2.4333659966941923,
+        2.4357200018130243,
+        2.391036003245972,
+        2.251612997497432,
+        2.4608050007373095,
+        2.3840380017645657,
+        2.2821370002930053,
+        2.2159389991429634,
+        2.2441160035668872,
+        1.9862670014845207,
+        1.9361149970791303,
+        1.9780009970418178,
+        1.79618300171569,
+        2.1814009960507974,
+        3.220635997422505,
+        2.739709998422768,
+        2.6586160020087846,
+        2.6372630018158816,
+        2.6132109996979125,
+        2.5535990062053315,
+        2.507731995137874,
+        2.4664249940542504,
+        2.464021003106609,
+        2.4666809986229055,
+        1.487819004978519,
+        1.4070060060475953,
+        1.3015020012971945,
+        1.3383289988269098,
+        1.339157999609597,
+        1.6514329981873743,
+        1.7369359993608668,
+        1.5268069982994348,
+        1.7796440006350167,
+        1.5855359961278737,
+        2.094879004289396,
+        2.1661270002368838,
+        2.1453289955388755,
+        2.0140980050200596,
+        2.131234999978915,
+        2.3830440040910617,
+        2.498797002772335,
+        2.2443330017267726,
+        2.257367996207904,
+        2.450004998536315,
+        2.899737999541685,
+        2.78340200020466,
+        2.7571159953367896,
+        3.0827089940430596,
+        2.708859996346291,
+        2.4335519992746413,
+        2.303537003172096,
+        2.223700998001732,
+        2.6209460047539324,
+        2.358637997531332
+      ]
+    },
+    "focus_queries": {
+      "Q-004": {
+        "query_id": "Q-004",
+        "query": "How long do I have to report an unauthorized charge under the zero liability fraud policy?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0016",
+          "document:DOC-0018",
+          "document:DOC-0017",
+          "document:DOC-0019",
+          "document:DOC-0030",
+          "document:DOC-0028",
+          "document:DOC-0029",
+          "document:DOC-0084",
+          "document:DOC-0025",
+          "document:DOC-0027"
+        ],
+        "doc_ids": [
+          "DOC-0016",
+          "DOC-0018",
+          "DOC-0017",
+          "DOC-0019",
+          "DOC-0030",
+          "DOC-0028",
+          "DOC-0029",
+          "DOC-0084",
+          "DOC-0025",
+          "DOC-0027"
+        ],
+        "gold_ranks": {
+          "DOC-0016": 1,
+          "DOC-0018": 2,
+          "DOC-0017": 3
+        },
+        "top_score": 8.0,
+        "hits": [
+          {
+            "key": "document:DOC-0016",
+            "chunk_id": "DOC-0016",
+            "doc_id": "DOC-0016",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 8.0,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0018",
+            "chunk_id": "DOC-0018",
+            "doc_id": "DOC-0018",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 5.8,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0017",
+            "chunk_id": "DOC-0017",
+            "doc_id": "DOC-0017",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 5.6,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0019",
+            "chunk_id": "DOC-0019",
+            "doc_id": "DOC-0019",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 5.2,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0030",
+            "chunk_id": "DOC-0030",
+            "doc_id": "DOC-0030",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.8,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0028",
+            "chunk_id": "DOC-0028",
+            "doc_id": "DOC-0028",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.4,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0029",
+            "chunk_id": "DOC-0029",
+            "doc_id": "DOC-0029",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.4,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0084",
+            "chunk_id": "DOC-0084",
+            "doc_id": "DOC-0084",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0025",
+            "chunk_id": "DOC-0025",
+            "doc_id": "DOC-0025",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.4,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0027",
+            "chunk_id": "DOC-0027",
+            "doc_id": "DOC-0027",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.4,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.845508006226737,
+            1.8581339973025024,
+            1.780480997695122,
+            2.210393999121152,
+            2.1085979969939217
+          ],
+          "db_ms": [
+            2.3402670049108565,
+            2.316170997801237,
+            2.2300670025288127,
+            2.622533997055143,
+            2.7058690029662102
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      "Q-005": {
+        "query_id": "Q-005",
+        "query": "What is the maximum deadline for filing a merchant chargeback dispute?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0020",
+          "document:DOC-0022",
+          "document:DOC-0023",
+          "document:DOC-0021",
+          "document:DOC-0026",
+          "document:DOC-0130",
+          "document:DOC-0024",
+          "document:DOC-0025",
+          "document:DOC-0027",
+          "document:DOC-0008"
+        ],
+        "doc_ids": [
+          "DOC-0020",
+          "DOC-0022",
+          "DOC-0023",
+          "DOC-0021",
+          "DOC-0026",
+          "DOC-0130",
+          "DOC-0024",
+          "DOC-0025",
+          "DOC-0027",
+          "DOC-0008"
+        ],
+        "gold_ranks": {
+          "DOC-0020": 1,
+          "DOC-0022": 2,
+          "DOC-0021": 4
+        },
+        "top_score": 4.6,
+        "hits": [
+          {
+            "key": "document:DOC-0020",
+            "chunk_id": "DOC-0020",
+            "doc_id": "DOC-0020",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 4.6,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0022",
+            "chunk_id": "DOC-0022",
+            "doc_id": "DOC-0022",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.2,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0023",
+            "chunk_id": "DOC-0023",
+            "doc_id": "DOC-0023",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.0,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0021",
+            "chunk_id": "DOC-0021",
+            "doc_id": "DOC-0021",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.8,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0026",
+            "chunk_id": "DOC-0026",
+            "doc_id": "DOC-0026",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.4,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0130",
+            "chunk_id": "DOC-0130",
+            "doc_id": "DOC-0130",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.4,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0024",
+            "chunk_id": "DOC-0024",
+            "doc_id": "DOC-0024",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.2,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0025",
+            "chunk_id": "DOC-0025",
+            "doc_id": "DOC-0025",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 0.8,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0027",
+            "chunk_id": "DOC-0027",
+            "doc_id": "DOC-0027",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 0.8,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0008",
+            "chunk_id": "DOC-0008",
+            "doc_id": "DOC-0008",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 0.4,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            0.7709999990765937,
+            0.7229990005725995,
+            0.7094120010151528,
+            0.7493380035157315,
+            0.7400429967674427
+          ],
+          "db_ms": [
+            1.2026670010527596,
+            1.163114000519272,
+            1.0873790015466511,
+            1.230672001838684,
+            1.1491039986140095
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      "Q-009": {
+        "query_id": "Q-009",
+        "query": "What is the daily cutoff time for submitting payments on time?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0040",
+          "document:DOC-0039",
+          "document:DOC-0009",
+          "document:DOC-0041",
+          "document:DOC-0044",
+          "document:DOC-0147",
+          "document:DOC-0010",
+          "document:DOC-0012",
+          "document:DOC-0140",
+          "document:DOC-0141"
+        ],
+        "doc_ids": [
+          "DOC-0040",
+          "DOC-0039",
+          "DOC-0009",
+          "DOC-0041",
+          "DOC-0044",
+          "DOC-0147",
+          "DOC-0010",
+          "DOC-0012",
+          "DOC-0140",
+          "DOC-0141"
+        ],
+        "gold_ranks": {
+          "DOC-0040": 1,
+          "DOC-0039": 2,
+          "DOC-0041": 4
+        },
+        "top_score": 3.6,
+        "hits": [
+          {
+            "key": "document:DOC-0040",
+            "chunk_id": "DOC-0040",
+            "doc_id": "DOC-0040",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.6,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0039",
+            "chunk_id": "DOC-0039",
+            "doc_id": "DOC-0039",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0009",
+            "chunk_id": "DOC-0009",
+            "doc_id": "DOC-0009",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.2,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0041",
+            "chunk_id": "DOC-0041",
+            "doc_id": "DOC-0041",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.8,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0044",
+            "chunk_id": "DOC-0044",
+            "doc_id": "DOC-0044",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.8,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0147",
+            "chunk_id": "DOC-0147",
+            "doc_id": "DOC-0147",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.8,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0010",
+            "chunk_id": "DOC-0010",
+            "doc_id": "DOC-0010",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.4,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0012",
+            "chunk_id": "DOC-0012",
+            "doc_id": "DOC-0012",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.4,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0140",
+            "chunk_id": "DOC-0140",
+            "doc_id": "DOC-0140",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.4,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0141",
+            "chunk_id": "DOC-0141",
+            "doc_id": "DOC-0141",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 1.4,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            0.8949430048232898,
+            0.8895749997464009,
+            0.8036290018935688,
+            0.7812050025677308,
+            0.8834889958961867
+          ],
+          "db_ms": [
+            1.312815998971928,
+            1.3782019959762692,
+            1.2885850010206923,
+            1.1503249988891184,
+            1.4275170033215545
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      },
+      "Q-014": {
+        "query_id": "Q-014",
+        "query": "How many months must I wait before requesting a credit limit increase?",
+        "path": "fts",
+        "evaluated": true,
+        "result_count": 10,
+        "unique_count": 10,
+        "doc_unique_count": 10,
+        "empty_result": false,
+        "semantic_recall": 1.0,
+        "keys": [
+          "document:DOC-0065",
+          "document:DOC-0066",
+          "document:DOC-0114",
+          "document:DOC-0067",
+          "document:DOC-0110",
+          "document:DOC-0068",
+          "document:DOC-0150",
+          "document:DOC-0106",
+          "document:DOC-0107",
+          "document:DOC-0108"
+        ],
+        "doc_ids": [
+          "DOC-0065",
+          "DOC-0066",
+          "DOC-0114",
+          "DOC-0067",
+          "DOC-0110",
+          "DOC-0068",
+          "DOC-0150",
+          "DOC-0106",
+          "DOC-0107",
+          "DOC-0108"
+        ],
+        "gold_ranks": {
+          "DOC-0065": 1,
+          "DOC-0066": 2,
+          "DOC-0067": 4
+        },
+        "top_score": 7.4,
+        "hits": [
+          {
+            "key": "document:DOC-0065",
+            "chunk_id": "DOC-0065",
+            "doc_id": "DOC-0065",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 7.4,
+            "rank": 1
+          },
+          {
+            "key": "document:DOC-0066",
+            "chunk_id": "DOC-0066",
+            "doc_id": "DOC-0066",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.8,
+            "rank": 2
+          },
+          {
+            "key": "document:DOC-0114",
+            "chunk_id": "DOC-0114",
+            "doc_id": "DOC-0114",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.4,
+            "rank": 3
+          },
+          {
+            "key": "document:DOC-0067",
+            "chunk_id": "DOC-0067",
+            "doc_id": "DOC-0067",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.2,
+            "rank": 4
+          },
+          {
+            "key": "document:DOC-0110",
+            "chunk_id": "DOC-0110",
+            "doc_id": "DOC-0110",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 3.2,
+            "rank": 5
+          },
+          {
+            "key": "document:DOC-0068",
+            "chunk_id": "DOC-0068",
+            "doc_id": "DOC-0068",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.8,
+            "rank": 6
+          },
+          {
+            "key": "document:DOC-0150",
+            "chunk_id": "DOC-0150",
+            "doc_id": "DOC-0150",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.8,
+            "rank": 7
+          },
+          {
+            "key": "document:DOC-0106",
+            "chunk_id": "DOC-0106",
+            "doc_id": "DOC-0106",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 8
+          },
+          {
+            "key": "document:DOC-0107",
+            "chunk_id": "DOC-0107",
+            "doc_id": "DOC-0107",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 9
+          },
+          {
+            "key": "document:DOC-0108",
+            "chunk_id": "DOC-0108",
+            "doc_id": "DOC-0108",
+            "chunk_strategy": "document",
+            "chunk_index": 0,
+            "score": 2.6,
+            "rank": 10
+          }
+        ],
+        "latency": {
+          "query_ms": [
+            1.2491079978644848,
+            1.2032800004817545,
+            1.2407920003170148,
+            1.2065880000591278,
+            1.1388969942345284
+          ],
+          "db_ms": [
+            1.6273189976345748,
+            1.5808050011401065,
+            1.6587310019531287,
+            1.6598889997112565,
+            1.5514249971602112
+          ]
+        },
+        "quality_mismatch_samples": 0,
+        "warmup_errors": 0,
+        "errors": 0,
+        "timeouts": 0,
+        "error_records": []
+      }
+    }
+  },
+  "totals": {
+    "evaluated_queries": 30,
+    "missing_queries": 0,
+    "errors": 0,
+    "timeouts": 0,
+    "warmup_errors": 0,
+    "quality_mismatch_samples": 0,
+    "path_counts": {
+      "fts": 150
+    }
+  },
+  "errors": [],
+  "and_mode_control": {
+    "note": "Control run: PostgreSQL's default bare-term AND semantics. It is not the production default and is not part of the primary metrics.",
+    "parameters": {
+      "queries": 30,
+      "top_k": 10,
+      "repetitions": 1,
+      "warmup_passes": 0,
+      "statement_timeout_ms": 5000,
+      "rank_weights": [
+        0.1,
+        0.2,
+        0.4,
+        1.0
+      ],
+      "language": "english",
+      "query_mode": "and",
+      "chunk_strategy": "document"
+    },
+    "quality": {
+      "evaluated_queries": 30,
+      "missing_queries": 0,
+      "semantic_recall_mean": 0.13333333333333333,
+      "semantic_recall_min": 0.0,
+      "semantic_recall_max": 1.0,
+      "empty_result_queries": 26,
+      "empty_result_rate": 0.8666666666666667,
+      "shortfall_queries": 30,
+      "overflow_queries": 0,
+      "duplicate_result_queries": 0,
+      "perfect_recall_queries": 4,
+      "zero_recall_queries": 26
+    },
+    "totals": {
+      "evaluated_queries": 30,
+      "missing_queries": 0,
+      "errors": 0,
+      "timeouts": 0,
+      "warmup_errors": 0,
+      "quality_mismatch_samples": 0,
+      "path_counts": {
+        "fts": 30
+      }
+    },
+    "per_query": [
+      {
+        "query_id": "Q-001",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-002",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-003",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-004",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-005",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-006",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-007",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-008",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-009",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-010",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-011",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-012",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-013",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-014",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-015",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-016",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-017",
+        "result_count": 1,
+        "semantic_recall": 1.0,
+        "empty_result": false
+      },
+      {
+        "query_id": "Q-018",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-019",
+        "result_count": 1,
+        "semantic_recall": 1.0,
+        "empty_result": false
+      },
+      {
+        "query_id": "Q-020",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-021",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-022",
+        "result_count": 1,
+        "semantic_recall": 1.0,
+        "empty_result": false
+      },
+      {
+        "query_id": "Q-023",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-024",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-025",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-026",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-027",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-028",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      },
+      {
+        "query_id": "Q-029",
+        "result_count": 1,
+        "semantic_recall": 1.0,
+        "empty_result": false
+      },
+      {
+        "query_id": "Q-030",
+        "result_count": 0,
+        "semantic_recall": 0.0,
+        "empty_result": true
+      }
+    ]
+  },
+  "dense_overlap": {
+    "available": true,
+    "source": "/app/reports/dense_benchmark.json",
+    "plan": "natural_plan",
+    "dense_top_k": 10,
+    "sparse_top_k": 10,
+    "top_k_aligned": true,
+    "compared_queries": 30,
+    "chunk_jaccard_mean": 0.3616563719504896,
+    "doc_jaccard_mean": 0.3616563719504896,
+    "gold_doc_coverage": {
+      "both": 38,
+      "sparse_only": 5,
+      "dense_only": 0,
+      "neither": 0
+    },
+    "per_query": [
+      {
+        "query_id": "Q-001",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 8,
+        "sparse_only_chunks": 2,
+        "dense_only_chunks": 2,
+        "chunk_jaccard": 0.6666666666666666,
+        "doc_overlap": 8,
+        "sparse_only_docs": 2,
+        "dense_only_docs": 2,
+        "doc_jaccard": 0.6666666666666666,
+        "gold": {
+          "gold_docs": [
+            "DOC-0001",
+            "DOC-0005"
+          ],
+          "both": [
+            "DOC-0001",
+            "DOC-0005"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-002",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 8,
+        "sparse_only_chunks": 2,
+        "dense_only_chunks": 2,
+        "chunk_jaccard": 0.6666666666666666,
+        "doc_overlap": 8,
+        "sparse_only_docs": 2,
+        "dense_only_docs": 2,
+        "doc_jaccard": 0.6666666666666666,
+        "gold": {
+          "gold_docs": [
+            "DOC-0003"
+          ],
+          "both": [
+            "DOC-0003"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-003",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 6,
+        "sparse_only_chunks": 4,
+        "dense_only_chunks": 4,
+        "chunk_jaccard": 0.42857142857142855,
+        "doc_overlap": 6,
+        "sparse_only_docs": 4,
+        "dense_only_docs": 4,
+        "doc_jaccard": 0.42857142857142855,
+        "gold": {
+          "gold_docs": [
+            "DOC-0005"
+          ],
+          "both": [
+            "DOC-0005"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-004",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 5,
+        "sparse_only_chunks": 5,
+        "dense_only_chunks": 5,
+        "chunk_jaccard": 0.3333333333333333,
+        "doc_overlap": 5,
+        "sparse_only_docs": 5,
+        "dense_only_docs": 5,
+        "doc_jaccard": 0.3333333333333333,
+        "gold": {
+          "gold_docs": [
+            "DOC-0016",
+            "DOC-0017",
+            "DOC-0018"
+          ],
+          "both": [
+            "DOC-0016",
+            "DOC-0018"
+          ],
+          "sparse_only": [
+            "DOC-0017"
+          ],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-005",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 7,
+        "sparse_only_chunks": 3,
+        "dense_only_chunks": 3,
+        "chunk_jaccard": 0.5384615384615384,
+        "doc_overlap": 7,
+        "sparse_only_docs": 3,
+        "dense_only_docs": 3,
+        "doc_jaccard": 0.5384615384615384,
+        "gold": {
+          "gold_docs": [
+            "DOC-0020",
+            "DOC-0021",
+            "DOC-0022"
+          ],
+          "both": [
+            "DOC-0020",
+            "DOC-0022"
+          ],
+          "sparse_only": [
+            "DOC-0021"
+          ],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-006",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 5,
+        "sparse_only_chunks": 5,
+        "dense_only_chunks": 5,
+        "chunk_jaccard": 0.3333333333333333,
+        "doc_overlap": 5,
+        "sparse_only_docs": 5,
+        "dense_only_docs": 5,
+        "doc_jaccard": 0.3333333333333333,
+        "gold": {
+          "gold_docs": [
+            "DOC-0024",
+            "DOC-0025",
+            "DOC-0026"
+          ],
+          "both": [
+            "DOC-0024",
+            "DOC-0025",
+            "DOC-0026"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-007",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 5,
+        "sparse_only_chunks": 5,
+        "dense_only_chunks": 5,
+        "chunk_jaccard": 0.3333333333333333,
+        "doc_overlap": 5,
+        "sparse_only_docs": 5,
+        "dense_only_docs": 5,
+        "doc_jaccard": 0.3333333333333333,
+        "gold": {
+          "gold_docs": [
+            "DOC-0031"
+          ],
+          "both": [
+            "DOC-0031"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-008",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 7,
+        "sparse_only_chunks": 3,
+        "dense_only_chunks": 3,
+        "chunk_jaccard": 0.5384615384615384,
+        "doc_overlap": 7,
+        "sparse_only_docs": 3,
+        "dense_only_docs": 3,
+        "doc_jaccard": 0.5384615384615384,
+        "gold": {
+          "gold_docs": [
+            "DOC-0036"
+          ],
+          "both": [
+            "DOC-0036"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-009",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 2,
+        "sparse_only_chunks": 8,
+        "dense_only_chunks": 8,
+        "chunk_jaccard": 0.1111111111111111,
+        "doc_overlap": 2,
+        "sparse_only_docs": 8,
+        "dense_only_docs": 8,
+        "doc_jaccard": 0.1111111111111111,
+        "gold": {
+          "gold_docs": [
+            "DOC-0039",
+            "DOC-0040",
+            "DOC-0041"
+          ],
+          "both": [
+            "DOC-0041"
+          ],
+          "sparse_only": [
+            "DOC-0039",
+            "DOC-0040"
+          ],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-010",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 3,
+        "sparse_only_chunks": 7,
+        "dense_only_chunks": 7,
+        "chunk_jaccard": 0.17647058823529413,
+        "doc_overlap": 3,
+        "sparse_only_docs": 7,
+        "dense_only_docs": 7,
+        "doc_jaccard": 0.17647058823529413,
+        "gold": {
+          "gold_docs": [
+            "DOC-0046"
+          ],
+          "both": [
+            "DOC-0046"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-011",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 5,
+        "sparse_only_chunks": 5,
+        "dense_only_chunks": 5,
+        "chunk_jaccard": 0.3333333333333333,
+        "doc_overlap": 5,
+        "sparse_only_docs": 5,
+        "dense_only_docs": 5,
+        "doc_jaccard": 0.3333333333333333,
+        "gold": {
+          "gold_docs": [
+            "DOC-0050",
+            "DOC-0051",
+            "DOC-0052"
+          ],
+          "both": [
+            "DOC-0050",
+            "DOC-0051",
+            "DOC-0052"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-012",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 4,
+        "sparse_only_chunks": 6,
+        "dense_only_chunks": 6,
+        "chunk_jaccard": 0.25,
+        "doc_overlap": 4,
+        "sparse_only_docs": 6,
+        "dense_only_docs": 6,
+        "doc_jaccard": 0.25,
+        "gold": {
+          "gold_docs": [
+            "DOC-0054"
+          ],
+          "both": [
+            "DOC-0054"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-013",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 4,
+        "sparse_only_chunks": 6,
+        "dense_only_chunks": 6,
+        "chunk_jaccard": 0.25,
+        "doc_overlap": 4,
+        "sparse_only_docs": 6,
+        "dense_only_docs": 6,
+        "doc_jaccard": 0.25,
+        "gold": {
+          "gold_docs": [
+            "DOC-0061"
+          ],
+          "both": [
+            "DOC-0061"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-014",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 5,
+        "sparse_only_chunks": 5,
+        "dense_only_chunks": 5,
+        "chunk_jaccard": 0.3333333333333333,
+        "doc_overlap": 5,
+        "sparse_only_docs": 5,
+        "dense_only_docs": 5,
+        "doc_jaccard": 0.3333333333333333,
+        "gold": {
+          "gold_docs": [
+            "DOC-0065",
+            "DOC-0066",
+            "DOC-0067"
+          ],
+          "both": [
+            "DOC-0065",
+            "DOC-0066"
+          ],
+          "sparse_only": [
+            "DOC-0067"
+          ],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-015",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 7,
+        "sparse_only_chunks": 3,
+        "dense_only_chunks": 3,
+        "chunk_jaccard": 0.5384615384615384,
+        "doc_overlap": 7,
+        "sparse_only_docs": 3,
+        "dense_only_docs": 3,
+        "doc_jaccard": 0.5384615384615384,
+        "gold": {
+          "gold_docs": [
+            "DOC-0065"
+          ],
+          "both": [
+            "DOC-0065"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-016",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 5,
+        "sparse_only_chunks": 5,
+        "dense_only_chunks": 5,
+        "chunk_jaccard": 0.3333333333333333,
+        "doc_overlap": 5,
+        "sparse_only_docs": 5,
+        "dense_only_docs": 5,
+        "doc_jaccard": 0.3333333333333333,
+        "gold": {
+          "gold_docs": [
+            "DOC-0076"
+          ],
+          "both": [
+            "DOC-0076"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-017",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 7,
+        "sparse_only_chunks": 3,
+        "dense_only_chunks": 3,
+        "chunk_jaccard": 0.5384615384615384,
+        "doc_overlap": 7,
+        "sparse_only_docs": 3,
+        "dense_only_docs": 3,
+        "doc_jaccard": 0.5384615384615384,
+        "gold": {
+          "gold_docs": [
+            "DOC-0077"
+          ],
+          "both": [
+            "DOC-0077"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-018",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 6,
+        "sparse_only_chunks": 4,
+        "dense_only_chunks": 4,
+        "chunk_jaccard": 0.42857142857142855,
+        "doc_overlap": 6,
+        "sparse_only_docs": 4,
+        "dense_only_docs": 4,
+        "doc_jaccard": 0.42857142857142855,
+        "gold": {
+          "gold_docs": [
+            "DOC-0094"
+          ],
+          "both": [
+            "DOC-0094"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-019",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 3,
+        "sparse_only_chunks": 7,
+        "dense_only_chunks": 7,
+        "chunk_jaccard": 0.17647058823529413,
+        "doc_overlap": 3,
+        "sparse_only_docs": 7,
+        "dense_only_docs": 7,
+        "doc_jaccard": 0.17647058823529413,
+        "gold": {
+          "gold_docs": [
+            "DOC-0058"
+          ],
+          "both": [
+            "DOC-0058"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-020",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 3,
+        "sparse_only_chunks": 7,
+        "dense_only_chunks": 7,
+        "chunk_jaccard": 0.17647058823529413,
+        "doc_overlap": 3,
+        "sparse_only_docs": 7,
+        "dense_only_docs": 7,
+        "doc_jaccard": 0.17647058823529413,
+        "gold": {
+          "gold_docs": [
+            "DOC-0099"
+          ],
+          "both": [
+            "DOC-0099"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-021",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 5,
+        "sparse_only_chunks": 5,
+        "dense_only_chunks": 5,
+        "chunk_jaccard": 0.3333333333333333,
+        "doc_overlap": 5,
+        "sparse_only_docs": 5,
+        "dense_only_docs": 5,
+        "doc_jaccard": 0.3333333333333333,
+        "gold": {
+          "gold_docs": [
+            "DOC-0037"
+          ],
+          "both": [
+            "DOC-0037"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-022",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 5,
+        "sparse_only_chunks": 5,
+        "dense_only_chunks": 5,
+        "chunk_jaccard": 0.3333333333333333,
+        "doc_overlap": 5,
+        "sparse_only_docs": 5,
+        "dense_only_docs": 5,
+        "doc_jaccard": 0.3333333333333333,
+        "gold": {
+          "gold_docs": [
+            "DOC-0043"
+          ],
+          "both": [
+            "DOC-0043"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-023",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 4,
+        "sparse_only_chunks": 6,
+        "dense_only_chunks": 6,
+        "chunk_jaccard": 0.25,
+        "doc_overlap": 4,
+        "sparse_only_docs": 6,
+        "dense_only_docs": 6,
+        "doc_jaccard": 0.25,
+        "gold": {
+          "gold_docs": [
+            "DOC-0057"
+          ],
+          "both": [
+            "DOC-0057"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-024",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 3,
+        "sparse_only_chunks": 7,
+        "dense_only_chunks": 7,
+        "chunk_jaccard": 0.17647058823529413,
+        "doc_overlap": 3,
+        "sparse_only_docs": 7,
+        "dense_only_docs": 7,
+        "doc_jaccard": 0.17647058823529413,
+        "gold": {
+          "gold_docs": [
+            "DOC-0073"
+          ],
+          "both": [
+            "DOC-0073"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-025",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 5,
+        "sparse_only_chunks": 5,
+        "dense_only_chunks": 5,
+        "chunk_jaccard": 0.3333333333333333,
+        "doc_overlap": 5,
+        "sparse_only_docs": 5,
+        "dense_only_docs": 5,
+        "doc_jaccard": 0.3333333333333333,
+        "gold": {
+          "gold_docs": [
+            "DOC-0024"
+          ],
+          "both": [
+            "DOC-0024"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-026",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 3,
+        "sparse_only_chunks": 7,
+        "dense_only_chunks": 7,
+        "chunk_jaccard": 0.17647058823529413,
+        "doc_overlap": 3,
+        "sparse_only_docs": 7,
+        "dense_only_docs": 7,
+        "doc_jaccard": 0.17647058823529413,
+        "gold": {
+          "gold_docs": [
+            "DOC-0061"
+          ],
+          "both": [
+            "DOC-0061"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-027",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 6,
+        "sparse_only_chunks": 4,
+        "dense_only_chunks": 4,
+        "chunk_jaccard": 0.42857142857142855,
+        "doc_overlap": 6,
+        "sparse_only_docs": 4,
+        "dense_only_docs": 4,
+        "doc_jaccard": 0.42857142857142855,
+        "gold": {
+          "gold_docs": [
+            "DOC-0106"
+          ],
+          "both": [
+            "DOC-0106"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-028",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 5,
+        "sparse_only_chunks": 5,
+        "dense_only_chunks": 5,
+        "chunk_jaccard": 0.3333333333333333,
+        "doc_overlap": 5,
+        "sparse_only_docs": 5,
+        "dense_only_docs": 5,
+        "doc_jaccard": 0.3333333333333333,
+        "gold": {
+          "gold_docs": [
+            "DOC-0149"
+          ],
+          "both": [
+            "DOC-0149"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-029",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 5,
+        "sparse_only_chunks": 5,
+        "dense_only_chunks": 5,
+        "chunk_jaccard": 0.3333333333333333,
+        "doc_overlap": 5,
+        "sparse_only_docs": 5,
+        "dense_only_docs": 5,
+        "doc_jaccard": 0.3333333333333333,
+        "gold": {
+          "gold_docs": [
+            "DOC-0060"
+          ],
+          "both": [
+            "DOC-0060"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      {
+        "query_id": "Q-030",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 8,
+        "sparse_only_chunks": 2,
+        "dense_only_chunks": 2,
+        "chunk_jaccard": 0.6666666666666666,
+        "doc_overlap": 8,
+        "sparse_only_docs": 2,
+        "dense_only_docs": 2,
+        "doc_jaccard": 0.6666666666666666,
+        "gold": {
+          "gold_docs": [
+            "DOC-0039"
+          ],
+          "both": [
+            "DOC-0039"
+          ],
+          "sparse_only": [],
+          "dense_only": [],
+          "neither": []
+        }
+      }
+    ],
+    "focus_queries": {
+      "Q-004": {
+        "query_id": "Q-004",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 5,
+        "sparse_only_chunks": 5,
+        "dense_only_chunks": 5,
+        "chunk_jaccard": 0.3333333333333333,
+        "doc_overlap": 5,
+        "sparse_only_docs": 5,
+        "dense_only_docs": 5,
+        "doc_jaccard": 0.3333333333333333,
+        "gold": {
+          "gold_docs": [
+            "DOC-0016",
+            "DOC-0017",
+            "DOC-0018"
+          ],
+          "both": [
+            "DOC-0016",
+            "DOC-0018"
+          ],
+          "sparse_only": [
+            "DOC-0017"
+          ],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      "Q-005": {
+        "query_id": "Q-005",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 7,
+        "sparse_only_chunks": 3,
+        "dense_only_chunks": 3,
+        "chunk_jaccard": 0.5384615384615384,
+        "doc_overlap": 7,
+        "sparse_only_docs": 3,
+        "dense_only_docs": 3,
+        "doc_jaccard": 0.5384615384615384,
+        "gold": {
+          "gold_docs": [
+            "DOC-0020",
+            "DOC-0021",
+            "DOC-0022"
+          ],
+          "both": [
+            "DOC-0020",
+            "DOC-0022"
+          ],
+          "sparse_only": [
+            "DOC-0021"
+          ],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      "Q-009": {
+        "query_id": "Q-009",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 2,
+        "sparse_only_chunks": 8,
+        "dense_only_chunks": 8,
+        "chunk_jaccard": 0.1111111111111111,
+        "doc_overlap": 2,
+        "sparse_only_docs": 8,
+        "dense_only_docs": 8,
+        "doc_jaccard": 0.1111111111111111,
+        "gold": {
+          "gold_docs": [
+            "DOC-0039",
+            "DOC-0040",
+            "DOC-0041"
+          ],
+          "both": [
+            "DOC-0041"
+          ],
+          "sparse_only": [
+            "DOC-0039",
+            "DOC-0040"
+          ],
+          "dense_only": [],
+          "neither": []
+        }
+      },
+      "Q-014": {
+        "query_id": "Q-014",
+        "sparse_result_count": 10,
+        "dense_result_count": 10,
+        "chunk_overlap": 5,
+        "sparse_only_chunks": 5,
+        "dense_only_chunks": 5,
+        "chunk_jaccard": 0.3333333333333333,
+        "doc_overlap": 5,
+        "sparse_only_docs": 5,
+        "dense_only_docs": 5,
+        "doc_jaccard": 0.3333333333333333,
+        "gold": {
+          "gold_docs": [
+            "DOC-0065",
+            "DOC-0066",
+            "DOC-0067"
+          ],
+          "both": [
+            "DOC-0065",
+            "DOC-0066"
+          ],
+          "sparse_only": [
+            "DOC-0067"
+          ],
+          "dense_only": [],
+          "neither": []
+        }
+      }
+    }
+  },
+  "environment": {
+    "postgres_version": "16.14 (Debian 16.14-1.pgdg12+1)",
+    "vector_version": "0.8.2",
+    "server_address": "172.22.0.2/32:5432",
+    "data_directory": "/var/lib/postgresql/data",
+    "fts_config": "english",
+    "tsv_expression": "((setweight(to_tsvector('english'::regconfig, COALESCE(title, ''::text)), 'A'::\"char\") || setweight(to_tsvector('english'::regconfig, COALESCE(card_tier, ''::text)), 'A'::\"char\")) || setweight(to_tsvector('english'::regconfig, COALESCE(content, ''::text)), 'B'::\"char\"))",
+    "gin_index": "CREATE INDEX chunks_tsv_gin ON public.chunks USING gin (tsv)",
+    "chunk_columns": "chunk_id, doc_id, chunk_strategy, chunk_index, title, content, embedded_text, embedding, category, card_tier, effective_year, policy_code, tsv",
+    "chunk_strategy": "document",
+    "documents": 150,
+    "chunks": 578,
+    "distinct_chunk_docs": 150,
+    "strategy_chunks": 150,
+    "strategy_docs": 150,
+    "chunk_strategies": {
+      "document": 150,
+      "fixed_window": 267,
+      "structured": 161
+    },
+    "embedding_dimensions": [
+      1024
+    ],
+    "embedding_model": "BAAI/bge-large-en-v1.5",
+    "english_tsquery_example": "'balanc' & 'transfer' & 'fee'",
+    "python_version": "3.12.13",
+    "psycopg_version": "3.3.6",
+    "docker_status": "not installed",
+    "execution_environment": "host Python fallback",
+    "container_execution": "not run (host fallback)",
+    "disk_free": "project=110.59GB free"
+  },
+  "dataset": {
+    "queries": 30,
+    "eval_queries_on_disk": 30,
+    "query_limit": null,
+    "gold_sizes": [
+      1,
+      2,
+      3
+    ],
+    "missing_gold_docs": [],
+    "hashes": {
+      "kb_documents.json": "7d230e97cbf76d2ca64382e7c0278c3b24bbe27b8a8904abc9553b45a230057d",
+      "eval_queries.json": "739bd308a90e72437ccbffca658ca950f6a069f2986040cb729694a878d9bbef"
+    },
+    "hashes_after": {
+      "kb_documents.json": "7d230e97cbf76d2ca64382e7c0278c3b24bbe27b8a8904abc9553b45a230057d",
+      "eval_queries.json": "739bd308a90e72437ccbffca658ca950f6a069f2986040cb729694a878d9bbef"
+    },
+    "post_run_counts": {
+      "documents": 150,
+      "chunks": 578,
+      "distinct_chunk_docs": 150,
+      "strategy_chunks": 150,
+      "strategy_docs": 150,
+      "embedding_dimensions": [
+        1024
+      ]
+    },
+    "data_integrity_ok": true
+  },
+  "chinese_probe": {
+    "available": true,
+    "note": "Synthetic probes, not part of the labelled 30-query set. The corpus is English; zero results do not demonstrate Chinese retrieval quality.",
+    "probes": [
+      {
+        "query": "余额转账手续费",
+        "path": "cjk",
+        "result_count": 0,
+        "doc_ids": [],
+        "scores": [],
+        "error": null,
+        "english_fts_match_count": 0
+      },
+      {
+        "query": "信用卡年费减免政策",
+        "path": "cjk",
+        "result_count": 0,
+        "doc_ids": [],
+        "scores": [],
+        "error": null,
+        "english_fts_match_count": 0
+      },
+      {
+        "query": "境外消费返现",
+        "path": "cjk",
+        "result_count": 0,
+        "doc_ids": [],
+        "scores": [],
+        "error": null,
+        "english_fts_match_count": 0
+      },
+      {
+        "query": "信用",
+        "path": "cjk",
+        "result_count": 0,
+        "doc_ids": [],
+        "scores": [],
+        "error": null,
+        "english_fts_match_count": 0
+      },
+      {
+        "query": "balance transfer fee 余额",
+        "path": "cjk",
+        "result_count": 0,
+        "doc_ids": [],
+        "scores": [],
+        "error": null,
+        "english_fts_match_count": 0
+      }
+    ],
+    "lexeme_evidence": {
+      "text": "'余额转账手续费':1",
+      "query": "'余额转账手续费'"
+    },
+    "bigram_example": [
+      "余额",
+      "额转",
+      "转账",
+      "账手",
+      "手续",
+      "续费"
+    ],
+    "control": {
+      "query": "balance transfer fee",
+      "path": "fts",
+      "result_count": 10,
+      "doc_ids": [
+        "DOC-0001",
+        "DOC-0004",
+        "DOC-0002",
+        "DOC-0005",
+        "DOC-0013",
+        "DOC-0015",
+        "DOC-0014",
+        "DOC-0006",
+        "DOC-0031",
+        "DOC-0008"
+      ]
+    }
+  },
+  "execution": {
+    "environment": "host Python fallback",
+    "container_execution": "not run",
+    "docker_status": "not installed",
+    "production_sanity": {
+      "query_id": "Q-001",
+      "production_keys": [
+        "document:DOC-0001",
+        "document:DOC-0005",
+        "document:DOC-0013",
+        "document:DOC-0002",
+        "document:DOC-0150",
+        "document:DOC-0003",
+        "document:DOC-0004",
+        "document:DOC-0009",
+        "document:DOC-0014",
+        "document:DOC-0015"
+      ],
+      "benchmark_keys": [
+        "document:DOC-0001",
+        "document:DOC-0005",
+        "document:DOC-0013",
+        "document:DOC-0002",
+        "document:DOC-0150",
+        "document:DOC-0003",
+        "document:DOC-0004",
+        "document:DOC-0009",
+        "document:DOC-0014",
+        "document:DOC-0015"
+      ],
+      "match": true
+    },
+    "dense_artifact": "/app/reports/dense_benchmark.json"
+  },
+  "issues": []
+}

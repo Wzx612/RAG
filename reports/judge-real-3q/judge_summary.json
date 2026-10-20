@@ -1,0 +1,573 @@
+{
+  "schema_version": 1,
+  "experiment_name": "llm_as_a_judge",
+  "status": "PARTIAL",
+  "status_reason": "real judge executed on 3/30 queries (smoke); this is not a full-set quality evaluation",
+  "generated_at": "2026-10-20T05:31:33.618153+00:00",
+  "finished_at": "2026-10-20T05:31:42.455693+00:00",
+  "run_id": "judge-20261020T053133Z-c2c1d6be",
+  "parameters": {
+    "queries": 3,
+    "expected_queries": 30,
+    "limit": 3,
+    "max_concurrency": 1,
+    "judge_temperature": 0.0,
+    "judge_max_tokens": 1024,
+    "low_score_threshold": 3,
+    "prompt_versions": {
+      "context_relevance": "judge-context-relevance-v1",
+      "faithfulness": "judge-faithfulness-v1"
+    },
+    "score_scale": {
+      "min": 1,
+      "max": 5
+    },
+    "judge_transport": {
+      "connect_timeout_s": 5.0,
+      "read_timeout_s": 60.0,
+      "max_retries": 2
+    },
+    "rag_artifact": "/app/reports/judge/rag_answers.json",
+    "rag_status": "PASS",
+    "rag_generated_at": "2026-10-20T05:31:13.076054+00:00",
+    "rag_provider_kind": "real",
+    "rag_retrieval_mode": "live",
+    "rag_model": "deepseek-chat"
+  },
+  "provider": {
+    "kind": "real",
+    "name": "openai_compatible",
+    "model": "deepseek-chat",
+    "is_real": true,
+    "api_key_present": true,
+    "real_judge_calls": true
+  },
+  "rag": {
+    "artifact_path": "/app/reports/judge/rag_answers.json",
+    "artifact_sha256": "9cc737800837021e81c521172ccf0665bb104567e36f14488f55b4756f4b4759",
+    "status": "PASS",
+    "status_reason": "all queries completed with a real provider",
+    "generated_at": "2026-10-20T05:31:13.076054+00:00",
+    "provider": {
+      "kind": "real",
+      "name": "openai_compatible",
+      "is_real": true,
+      "model": "deepseek-chat",
+      "endpoint": "https://api.deepseek.com/chat/completions",
+      "api_key_present": true,
+      "real_llm_calls": true,
+      "real_llm_evaluation": "executed",
+      "llm_judge": {
+        "executed": false,
+        "reason": "No judge model, rubric or budget was configured or run."
+      }
+    },
+    "model": "deepseek-chat",
+    "is_real": true,
+    "retrieval_mode": "live",
+    "queries": 3
+  },
+  "environment": {
+    "execution_environment": "docker container",
+    "python_version": "3.12.13",
+    "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+    "postgres_version": "16.14 (Debian 16.14-1.pgdg12+1)",
+    "vector_version": "0.8.2",
+    "server_address": "172.22.0.2/32:5432",
+    "chunk_strategy": "document",
+    "documents": 150,
+    "chunks": 578,
+    "distinct_chunk_docs": 150,
+    "strategy_chunks": 150,
+    "strategy_docs": 150,
+    "chunk_strategies": {
+      "document": 150,
+      "fixed_window": 267,
+      "structured": 161
+    },
+    "embedding_dimensions": [
+      1024
+    ],
+    "embedding_model": "BAAI/bge-large-en-v1.5",
+    "query_instruction": "Represent this sentence for searching relevant passages: ",
+    "hnsw_index": "CREATE INDEX chunks_embedding_hnsw_idx ON public.chunks USING hnsw (embedding vector_cosine_ops) WITH (m='16', ef_construction='64')",
+    "gin_index": "CREATE INDEX chunks_tsv_gin ON public.chunks USING gin (tsv)",
+    "ef_search_setting": "40",
+    "dependency_versions": {
+      "psycopg": "3.3.6",
+      "psycopg-pool": "3.3.3",
+      "pgvector": "0.5.1",
+      "sentence-transformers": "6.1.0",
+      "torch": "2.14.1+cpu",
+      "transformers": "5.20.0",
+      "numpy": "2.5.4",
+      "pydantic": "2.14.1",
+      "psutil": "7.2.2",
+      "pytest": "9.1.1"
+    },
+    "docker_status": "not installed",
+    "command": "python scripts/evaluate_judge.py --provider real --judge-provider real --limit 3 --retrieval-mode live --allow-network --output-dir reports/judge --overwrite",
+    "memory_before": {
+      "available": true,
+      "process_rss_mib": 75.5,
+      "system_available_gib": 14.07
+    }
+  },
+  "dataset": {
+    "queries": 30,
+    "gold_sizes": [
+      1,
+      2,
+      3
+    ],
+    "distinct_gold_docs": 38,
+    "missing_gold_docs": [],
+    "hashes": {
+      "kb_documents.json": "7d230e97cbf76d2ca64382e7c0278c3b24bbe27b8a8904abc9553b45a230057d",
+      "eval_queries.json": "739bd308a90e72437ccbffca658ca950f6a069f2986040cb729694a878d9bbef"
+    }
+  },
+  "summary": {
+    "queries": 3,
+    "expected_queries": 30,
+    "not_run_queries": 27,
+    "rag_status_counts": {
+      "ok": 3
+    },
+    "rag_failures": 0,
+    "both_metrics_success": 3,
+    "queries_with_judge_failure": 0,
+    "judge_is_real": true,
+    "rag_is_real": true,
+    "metrics": {
+      "context_relevance": {
+        "attempted": 3,
+        "not_attempted": 0,
+        "success": 3,
+        "failed": 0,
+        "success_rate": 1.0,
+        "failure_rate": 0.0,
+        "valid_scores": 3,
+        "mean": 4.333333333333333,
+        "median": 4,
+        "distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 2,
+          "5": 1
+        },
+        "low_score_threshold": 3,
+        "low_score_count": 0,
+        "low_score_samples": [],
+        "failure_counts": {
+          "status": {},
+          "error_category": {}
+        }
+      },
+      "faithfulness": {
+        "attempted": 3,
+        "not_attempted": 0,
+        "success": 3,
+        "failed": 0,
+        "success_rate": 1.0,
+        "failure_rate": 0.0,
+        "valid_scores": 3,
+        "mean": 5.0,
+        "median": 5,
+        "distribution": {
+          "1": 0,
+          "2": 0,
+          "3": 0,
+          "4": 0,
+          "5": 3
+        },
+        "low_score_threshold": 3,
+        "low_score_count": 0,
+        "low_score_samples": [],
+        "failure_counts": {
+          "status": {},
+          "error_category": {}
+        }
+      }
+    },
+    "same_model": true
+  },
+  "metrics": {
+    "context_relevance": {
+      "attempted": 3,
+      "not_attempted": 0,
+      "success": 3,
+      "failed": 0,
+      "success_rate": 1.0,
+      "failure_rate": 0.0,
+      "valid_scores": 3,
+      "mean": 4.333333333333333,
+      "median": 4,
+      "distribution": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 2,
+        "5": 1
+      },
+      "low_score_threshold": 3,
+      "low_score_count": 0,
+      "low_score_samples": [],
+      "failure_counts": {
+        "status": {},
+        "error_category": {}
+      }
+    },
+    "faithfulness": {
+      "attempted": 3,
+      "not_attempted": 0,
+      "success": 3,
+      "failed": 0,
+      "success_rate": 1.0,
+      "failure_rate": 0.0,
+      "valid_scores": 3,
+      "mean": 5.0,
+      "median": 5,
+      "distribution": {
+        "1": 0,
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 3
+      },
+      "low_score_threshold": 3,
+      "low_score_count": 0,
+      "low_score_samples": [],
+      "failure_counts": {
+        "status": {},
+        "error_category": {}
+      }
+    },
+    "llm_as_a_judge": {
+      "executed": true,
+      "real_judge_calls": true,
+      "judge_model": "deepseek-chat",
+      "score_scale": {
+        "min": 1,
+        "max": 5
+      },
+      "aggregation": "mean, median and distribution use only status=success; failed or unattempted metrics are excluded and counted separately",
+      "latency_ms_mean": 1471.915821666092,
+      "latency_samples": 6
+    }
+  },
+  "per_query": [
+    {
+      "query_id": "Q-001",
+      "query": "How many days do I have to request a 0% intro balance transfer on Apex Platinum?",
+      "rag_run_id": "2026-10-20T05:31:13.076054+00:00",
+      "rag_status": "ok",
+      "rag_provider": "openai_compatible",
+      "rag_model": "deepseek-flash",
+      "rag_is_real": true,
+      "answer_sha256": "8841ae1ca1f67332c0407e9df5d4faad8bf6cab1a19d4ae8e2a0c51aa84ee949",
+      "context_sha256": "076a18e1f5305b292160d85382daa324ac36506e93410bd755912e16ea7963aa",
+      "context_labels": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ],
+      "context_relevance": {
+        "metric": "context_relevance",
+        "status": "success",
+        "attempted": true,
+        "score": 4,
+        "reason": "E1 directly answers the question: for Apex Platinum, balance transfers must be requested within 60 days of account creation to get the 0% intro APR. Other contexts (E2-E4, E5, E7-E10) concern different products or different balance-transfer aspects (processing times, limits, interest allocation) and are not needed for this question, though E1 alone contains the key information.",
+        "relevant_context_ids": [
+          "E1"
+        ],
+        "irrelevant_context_ids": [
+          "E2",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E8",
+          "E9",
+          "E10"
+        ],
+        "prompt_version": "judge-context-relevance-v1",
+        "prompt_sha256": "94b246cdf4c038967ef7e0f98bc8d3f18d5edb80a6e6c17a4c863d37f521a5e1",
+        "model": "deepseek-flash",
+        "latency_ms": 1418.7139690038748,
+        "attempts": 1,
+        "usage": {
+          "prompt_tokens": 1395,
+          "completion_tokens": 145,
+          "total_tokens": 1540
+        },
+        "raw_response": "{\"score\": 4, \"reason\": \"E1 directly answers the question: for Apex Platinum, balance transfers must be requested within 60 days of account creation to get the 0% intro APR. Other contexts (E2-E4, E5, E7-E10) concern different products or different balance-transfer aspects (processing times, limits, interest allocation) and are not needed for this question, though E1 alone contains the key information.\", \"relevant_context_ids\": [\"E1\"], \"irrelevant_context_ids\": [\"E2\", \"E3\", \"E4\", \"E5\", \"E6\", \"E7\", \"E8\", \"E9\", \"E10\"]}",
+        "error": null
+      },
+      "faithfulness": {
+        "metric": "faithfulness",
+        "status": "success",
+        "attempted": true,
+        "score": 5,
+        "reason": "The answer restates a single factual claim that is explicitly supported by the Apex Platinum 2024 balance transfer policy context (E1). No unsupported details are added.",
+        "claims": [
+          {
+            "claim": "For the Apex Platinum card, the 2024 policy states that the promotional 0% intro APR applies to balance transfers requested within 60 days of account creation.",
+            "support_status": "supported",
+            "evidence_context_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "unsupported_claims": [],
+        "prompt_version": "judge-faithfulness-v1",
+        "prompt_sha256": "cbc1a6ba78bcffb9ef5203840b65faaa4e8d1671b59f462324e125ab587a024a",
+        "model": "deepseek-flash",
+        "latency_ms": 1562.24553300126,
+        "attempts": 1,
+        "usage": {
+          "prompt_tokens": 1607,
+          "completion_tokens": 113,
+          "total_tokens": 1720
+        },
+        "raw_response": "{\"score\": 5, \"reason\": \"The answer restates a single factual claim that is explicitly supported by the Apex Platinum 2024 balance transfer policy context (E1). No unsupported details are added.\", \"claims\": [{\"claim\": \"For the Apex Platinum card, the 2024 policy states that the promotional 0% intro APR applies to balance transfers requested within 60 days of account creation.\", \"support_status\": \"supported\", \"evidence_context_ids\": [\"E1\"]}], \"unsupported_claims\": []}",
+        "error": null
+      }
+    },
+    {
+      "query_id": "Q-002",
+      "query": "What is the balance transfer fee for the Everyday Freedom card?",
+      "rag_run_id": "2026-10-20T05:31:13.076054+00:00",
+      "rag_status": "ok",
+      "rag_provider": "openai_compatible",
+      "rag_model": "deepseek-flash",
+      "rag_is_real": true,
+      "answer_sha256": "fed7437ac9dcbae36bd2627f527bfdc774a4ec6afda8cb9025720705a3daa0ff",
+      "context_sha256": "73fb535d889e31affc5b58dc2b1f2c5a6847172fc1bf0f56bc77211731217ea7",
+      "context_labels": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ],
+      "context_relevance": {
+        "metric": "context_relevance",
+        "status": "success",
+        "attempted": true,
+        "score": 4,
+        "reason": "E1 directly states the balance transfer fee (3% or $5 minimum) for the Everyday Freedom card, fully answering the question. Other contexts cover balance transfer topics (caps, expiration, delivery) but do not contain the fee; the remaining contexts are unrelated fees. The key information is present, though diluted by many irrelevant contexts.",
+        "relevant_context_ids": [
+          "E1"
+        ],
+        "irrelevant_context_ids": [
+          "E2",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E8",
+          "E9",
+          "E10"
+        ],
+        "prompt_version": "judge-context-relevance-v1",
+        "prompt_sha256": "f58baddc646838cb4c4f8ac70ecedf3e110d2a3b89afc38d6be9c09c01e16d13",
+        "model": "deepseek-flash",
+        "latency_ms": 1767.3449470021296,
+        "attempts": 1,
+        "usage": {
+          "prompt_tokens": 1267,
+          "completion_tokens": 129,
+          "total_tokens": 1396
+        },
+        "raw_response": "{\"score\": 4, \"reason\": \"E1 directly states the balance transfer fee (3% or $5 minimum) for the Everyday Freedom card, fully answering the question. Other contexts cover balance transfer topics (caps, expiration, delivery) but do not contain the fee; the remaining contexts are unrelated fees. The key information is present, though diluted by many irrelevant contexts.\", \"relevant_context_ids\": [\"E1\"], \"irrelevant_context_ids\": [\"E2\", \"E3\", \"E4\", \"E5\", \"E6\", \"E7\", \"E8\", \"E9\", \"E10\"]}",
+        "error": null
+      },
+      "faithfulness": {
+        "metric": "faithfulness",
+        "status": "success",
+        "attempted": true,
+        "score": 5,
+        "reason": "The answer states the balance transfer fee is 3% or $5 minimum, which is explicitly supported by context E1. No unsupported claims.",
+        "claims": [
+          {
+            "claim": "The balance transfer fee is 3% or $5 minimum.",
+            "support_status": "supported",
+            "evidence_context_ids": [
+              "E1"
+            ]
+          },
+          {
+            "claim": "This is per the 2024 terms for the Apex Everyday Freedom card.",
+            "support_status": "supported",
+            "evidence_context_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "unsupported_claims": [],
+        "prompt_version": "judge-faithfulness-v1",
+        "prompt_sha256": "e4d7f4453cbbbe6b074afd0766ef9a0d32077a633e4471d8584f083902b71e79",
+        "model": "deepseek-flash",
+        "latency_ms": 1308.2263429969316,
+        "attempts": 1,
+        "usage": {
+          "prompt_tokens": 1472,
+          "completion_tokens": 124,
+          "total_tokens": 1596
+        },
+        "raw_response": "{\"score\": 5, \"reason\": \"The answer states the balance transfer fee is 3% or $5 minimum, which is explicitly supported by context E1. No unsupported claims.\", \"claims\": [{\"claim\": \"The balance transfer fee is 3% or $5 minimum.\", \"support_status\": \"supported\", \"evidence_context_ids\": [\"E1\"]}, {\"claim\": \"This is per the 2024 terms for the Apex Everyday Freedom card.\", \"support_status\": \"supported\", \"evidence_context_ids\": [\"E1\"]}], \"unsupported_claims\": []}",
+        "error": null
+      }
+    },
+    {
+      "query_id": "Q-003",
+      "query": "How long does it take for an external balance transfer to process on Apex Platinum?",
+      "rag_run_id": "2026-10-20T05:31:13.076054+00:00",
+      "rag_status": "ok",
+      "rag_provider": "openai_compatible",
+      "rag_model": "deepseek-flash",
+      "rag_is_real": true,
+      "answer_sha256": "b840be9531f7a702e68f30ae5efeb971b2f1e908b36b231b1259b1ad989e255e",
+      "context_sha256": "87a74fc1f6711d1112436abeaf11c2512998684ba48655daeed8129c69e80952",
+      "context_labels": [
+        "E1",
+        "E2",
+        "E3",
+        "E4",
+        "E5",
+        "E6",
+        "E7",
+        "E8",
+        "E9",
+        "E10"
+      ],
+      "context_relevance": {
+        "metric": "context_relevance",
+        "status": "success",
+        "attempted": true,
+        "score": 5,
+        "reason": "E1 directly answers the question, stating that standard balance transfers on Apex Platinum take 5 to 7 business days to process and pay out to external card issuers. The other contexts concern different products or other balance-transfer topics (APR, fees, limits), so they are irrelevant to the processing-time question.",
+        "relevant_context_ids": [
+          "E1"
+        ],
+        "irrelevant_context_ids": [
+          "E2",
+          "E3",
+          "E4",
+          "E5",
+          "E6",
+          "E7",
+          "E8",
+          "E9",
+          "E10"
+        ],
+        "prompt_version": "judge-context-relevance-v1",
+        "prompt_sha256": "4df76120bf6408d75e34c6414a71f9373347811b5d2424f474a62bd77a683d53",
+        "model": "deepseek-flash",
+        "latency_ms": 1311.8617719956092,
+        "attempts": 1,
+        "usage": {
+          "prompt_tokens": 1372,
+          "completion_tokens": 126,
+          "total_tokens": 1498
+        },
+        "raw_response": "{\"score\": 5, \"reason\": \"E1 directly answers the question, stating that standard balance transfers on Apex Platinum take 5 to 7 business days to process and pay out to external card issuers. The other contexts concern different products or other balance-transfer topics (APR, fees, limits), so they are irrelevant to the processing-time question.\", \"relevant_context_ids\": [\"E1\"], \"irrelevant_context_ids\": [\"E2\", \"E3\", \"E4\", \"E5\", \"E6\", \"E7\", \"E8\", \"E9\", \"E10\"]}",
+        "error": null
+      },
+      "faithfulness": {
+        "metric": "faithfulness",
+        "status": "success",
+        "attempted": true,
+        "score": 5,
+        "reason": "The answer's claims are directly and explicitly supported by context E1, which states that Apex Platinum standard balance transfers take 5 to 7 business days and that expedited transfers are not available.",
+        "claims": [
+          {
+            "claim": "For Apex Platinum, standard balance transfer requests take 5 to 7 business days to process and pay out to external card issuers.",
+            "support_status": "supported",
+            "evidence_context_ids": [
+              "E1"
+            ]
+          },
+          {
+            "claim": "Expedited transfers are not available.",
+            "support_status": "supported",
+            "evidence_context_ids": [
+              "E1"
+            ]
+          }
+        ],
+        "unsupported_claims": [],
+        "prompt_version": "judge-faithfulness-v1",
+        "prompt_sha256": "5c21a43fb466d057e74025fbb3e557f25f16d1eff939da88d6f97b1b24d89ff1",
+        "model": "deepseek-flash",
+        "latency_ms": 1463.1023659967468,
+        "attempts": 1,
+        "usage": {
+          "prompt_tokens": 1586,
+          "completion_tokens": 141,
+          "total_tokens": 1727
+        },
+        "raw_response": "{\"score\": 5, \"reason\": \"The answer's claims are directly and explicitly supported by context E1, which states that Apex Platinum standard balance transfers take 5 to 7 business days and that expedited transfers are not available.\", \"claims\": [{\"claim\": \"For Apex Platinum, standard balance transfer requests take 5 to 7 business days to process and pay out to external card issuers.\", \"support_status\": \"supported\", \"evidence_context_ids\": [\"E1\"]}, {\"claim\": \"Expedited transfers are not available.\", \"support_status\": \"supported\", \"evidence_context_ids\": [\"E1\"]}], \"unsupported_claims\": []}",
+        "error": null
+      }
+    }
+  ],
+  "limitations": [
+    "Only 3 of 30 queries were judged; this smoke run does not describe the full evaluation set.",
+    "Judge scores are model-generated judgements, not ground truth; no human review or inter-judge agreement was performed.",
+    "Context Relevance scores the supplied evidence only; it is not retrieval Recall and does not show that the right document was retrieved.",
+    "Faithfulness uses only the evidence actually sent to the answer model. A claim that is true but absent from that evidence is still unsupported here.",
+    "The judge may be sensitive to prompt order, context length and language; repeat-run variance was not measured.",
+    "The 30 queries are English; Chinese and mixed-language judging are not evaluated.",
+    "The judge reuses the same model id as the answer generator; self-evaluation bias is unquantified and the scores must not be treated as independent."
+  ],
+  "gold_usage": {
+    "used_for_retrieval": false,
+    "gold_response_used_for_scoring": false,
+    "reason": "Context Relevance and Faithfulness use only the question, the answer and the evidence actually supplied to the answer model."
+  },
+  "commands": [
+    "python scripts/evaluate_judge.py --provider real --judge-provider real --limit 3 --retrieval-mode live --allow-network --output-dir reports/judge --overwrite"
+  ],
+  "integrity": {
+    "rag_artifact_sha256": "9cc737800837021e81c521172ccf0665bb104567e36f14488f55b4756f4b4759",
+    "rag_status": "PASS",
+    "rag_generated_at": "2026-10-20T05:31:13.076054+00:00",
+    "counts_before": {
+      "documents": 150,
+      "chunks": 578,
+      "distinct_chunk_docs": 150,
+      "strategy_chunks": 150,
+      "strategy_docs": 150
+    },
+    "counts_after": {
+      "documents": 150,
+      "chunks": 578,
+      "distinct_chunk_docs": 150,
+      "strategy_chunks": 150,
+      "strategy_docs": 150
+    },
+    "hashes_after": {
+      "kb_documents.json": "7d230e97cbf76d2ca64382e7c0278c3b24bbe27b8a8904abc9553b45a230057d",
+      "eval_queries.json": "739bd308a90e72437ccbffca658ca950f6a069f2986040cb729694a878d9bbef"
+    },
+    "missing_gold_docs_after": [],
+    "data_integrity_ok": true
+  }
+}

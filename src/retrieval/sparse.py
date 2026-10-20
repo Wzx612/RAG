@@ -78,8 +78,12 @@ preserves the caller's alternatives.
 # Keep this column order in sync with _rows_to_hits().
 #
 # `%s::float4[]` is the {D, C, B, A} weight vector, `%s::regconfig` is the text
-# search configuration, `%s` is the query text, and the final `%s` is Top-K.
-# Every value is bound; no user text is interpolated into SQL.
+# search configuration, `%s` is the query text, `%s` is the chunk strategy and
+# the final `%s` is Top-K. Every value is bound; no user text is interpolated
+# into SQL.
+#
+# The strategy filter is mandatory: one document may be chunked several ways,
+# and mixing the chunkings in one ranked list would invalidate every metric.
 SPARSE_SEARCH_SQL = """
     SELECT
         c.chunk_id,
@@ -99,6 +103,7 @@ SPARSE_SEARCH_SQL = """
         SELECT websearch_to_tsquery(%s::regconfig, %s) AS query
     ) AS q
     WHERE c.tsv @@ q.query
+      AND c.chunk_strategy = %s
     ORDER BY score DESC, c.chunk_strategy, c.chunk_id
     LIMIT %s
 """
@@ -132,6 +137,7 @@ SPARSE_CJK_SQL = """
            OR strpos(c.content, bg) > 0
            OR strpos(c.card_tier, bg) > 0
     )
+      AND c.chunk_strategy = %s
     ORDER BY score DESC, c.chunk_strategy, c.chunk_id
     LIMIT %s
 """
@@ -235,7 +241,7 @@ class SparseRetriever:
                 raise RetrievalError(f"database connection failed: {exc}") from exc
 
             try:
-                hits = _rows_to_hits(rows)
+                hits = _rows_to_hits(rows, expected_strategy=self._config.chunk_strategy)
             except RetrievalError as exc:
                 logger.error(
                     "sparse retrieval rejected database rows: %s (db_ms=%.2f)",
@@ -274,7 +280,7 @@ class SparseRetriever:
             started = time.perf_counter()
             rows = conn.execute(
                 SPARSE_CJK_SQL,
-                (cjk_terms, cjk_terms, top_k),
+                (cjk_terms, cjk_terms, self._config.chunk_strategy, top_k),
                 prepare=False,
             ).fetchall()
             query_ms = (time.perf_counter() - started) * 1000.0
@@ -284,7 +290,13 @@ class SparseRetriever:
         started = time.perf_counter()
         rows = conn.execute(
             SPARSE_SEARCH_SQL,
-            (list(self._config.rank_weights), self._config.language, fts_query, top_k),
+            (
+                list(self._config.rank_weights),
+                self._config.language,
+                fts_query,
+                self._config.chunk_strategy,
+                top_k,
+            ),
             prepare=False,
         ).fetchall()
         query_ms = (time.perf_counter() - started) * 1000.0
@@ -346,10 +358,23 @@ def _cjk_bigrams(text: str) -> list[str]:
     return list(dict.fromkeys(terms))
 
 
-def _rows_to_hits(rows: Sequence[Sequence[Any]]) -> list[SearchHit]:
-    """Map the SELECT's column order to validated :class:`SearchHit` objects."""
+def _rows_to_hits(
+    rows: Sequence[Sequence[Any]],
+    *,
+    expected_strategy: str | None = None,
+) -> list[SearchHit]:
+    """Map the SELECT's column order to validated :class:`SearchHit` objects.
+
+    ``expected_strategy`` is a defence-in-depth check; the SQL already filters
+    on it. A mismatch means the query or the injected test double is wrong.
+    """
     hits: list[SearchHit] = []
     for rank, row in enumerate(rows, start=1):
+        if expected_strategy is not None and str(row[2]) != expected_strategy:
+            raise RetrievalError(
+                f"sparse retrieval returned chunk_strategy={row[2]!r} for "
+                f"chunk {row[0]!r}, expected {expected_strategy!r}"
+            )
         score = float(row[5])
         if not math.isfinite(score) or score < 0:
             raise RetrievalError(

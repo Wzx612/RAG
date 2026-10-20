@@ -6,8 +6,10 @@ same query vectors, Top-K and chunk granularity:
 * ``exact`` -- a transaction-local planner override forces a sequential scan of
   ``chunks``; this is the exact cosine Top-K reference.
 * ``natural`` -- no planner override, matching what production actually does.
-* ``hnsw`` -- a transaction-local ``SET LOCAL enable_seqscan = off`` forces the
-  HNSW index path, then sweeps ``hnsw.ef_search``.
+* ``hnsw`` -- transaction-local ``enable_seqscan=off``, ``enable_bitmapscan=off``
+  and ``enable_sort=off`` remove the competing sequential, bitmap and Sort
+  plans, so ``ORDER BY distance LIMIT k`` can only be served by the HNSW index;
+  then sweep ``hnsw.ef_search``.
 
 The module only measures and records. It computes ANN Recall@K against the
 exact reference, not semantic retrieval quality against the human labels; that
@@ -27,7 +29,7 @@ from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import psycopg
 from pgvector import Vector
@@ -41,9 +43,10 @@ from src.db import (
     current_ef_search,
     ef_search,
 )
+from src.evaluation.artifacts import ensure_writable
 from src.evaluation.metrics import percentile, recall_at_k
 from src.retrieval.dense import DENSE_SEARCH_SQL
-from src.schema.retrieval import DenseConfig
+from src.schema.retrieval import DenseConfig, RetrievalStrategy
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -86,6 +89,7 @@ class BenchmarkConfig:
     ef_search: int
     top_k: int
     description: str
+    chunk_strategy: str = "document"
 
 
 @dataclass(frozen=True)
@@ -158,7 +162,11 @@ def load_eval_queries(path: Path | None = None) -> list[EvalQuery]:
     return queries
 
 
-def build_configs(top_k: int, ef_values: Sequence[int]) -> list[BenchmarkConfig]:
+def build_configs(
+    top_k: int,
+    ef_values: Sequence[int],
+    chunk_strategy: str = "document",
+) -> list[BenchmarkConfig]:
     """Build the exact, natural and HNSW arms for one controlled experiment.
 
     Args:
@@ -167,6 +175,7 @@ def build_configs(top_k: int, ef_values: Sequence[int]) -> list[BenchmarkConfig]
         ef_values: Distinct ``hnsw.ef_search`` values for the HNSW arms. Values
             below ``top_k`` are legal but can truncate the HNSW result; the
             report exposes that shortfall rather than hiding it.
+        chunk_strategy: Chunking strategy every arm is restricted to.
 
     Returns:
         ``exact_seqscan``, ``natural_plan``, then one ``hnsw_ef_<value>`` arm per
@@ -180,9 +189,14 @@ def build_configs(top_k: int, ef_values: Sequence[int]) -> list[BenchmarkConfig]
     if not values:
         raise BenchmarkError("at least one ef_search value is required")
     try:
-        DenseConfig(top_n=top_k)
+        strategy = cast(RetrievalStrategy, chunk_strategy)
+        DenseConfig(top_n=top_k, chunk_strategy=strategy)
         for value in values:
-            DenseConfig(top_n=top_k, ef_search=value)
+            DenseConfig(
+                top_n=top_k,
+                ef_search=value,
+                chunk_strategy=strategy,
+            )
     except ValidationError as exc:
         raise BenchmarkError(f"invalid benchmark configuration: {exc}") from exc
 
@@ -193,6 +207,7 @@ def build_configs(top_k: int, ef_values: Sequence[int]) -> list[BenchmarkConfig]
             ef_search=EF_SEARCH_DEFAULT,
             top_k=top_k,
             description="Exact cosine Top-K via a forced Seq Scan on chunks.",
+            chunk_strategy=chunk_strategy,
         ),
         BenchmarkConfig(
             name="natural_plan",
@@ -200,6 +215,7 @@ def build_configs(top_k: int, ef_values: Sequence[int]) -> list[BenchmarkConfig]
             ef_search=EF_SEARCH_DEFAULT,
             top_k=top_k,
             description="Production path: no planner forcing, default ef_search.",
+            chunk_strategy=chunk_strategy,
         ),
     ]
     configs.extend(
@@ -209,6 +225,7 @@ def build_configs(top_k: int, ef_values: Sequence[int]) -> list[BenchmarkConfig]
             ef_search=value,
             top_k=top_k,
             description=f"Forced HNSW path at hnsw.ef_search={value}.",
+            chunk_strategy=chunk_strategy,
         )
         for value in values
     )
@@ -255,9 +272,14 @@ def _configure_planner(conn: psycopg.Connection, mode: Mode) -> None:
     """Apply transaction-local planner overrides for one measurement.
 
     The exact arm disables every index path available to ``chunks``; the HNSW
-    arm only makes a sequential scan unattractive. Both are ``SET LOCAL`` and
-    therefore vanish when the enclosing transaction ends. No global setting is
-    touched.
+    arm makes a sequential scan unattractive and discourages a Sort node. The
+    latter matters once ``chunks`` holds several chunk strategies: filtering on
+    ``chunk_strategy`` lets the planner pick ``chunks_strategy_idx`` plus a
+    Sort by distance instead of the ANN index, even with ``enable_seqscan=off``.
+    With ``enable_sort=off`` the only cheap way to satisfy ``ORDER BY distance
+    LIMIT k`` is the HNSW index, so the arm measures what its name claims. All
+    settings are ``SET LOCAL`` and vanish when the enclosing transaction ends.
+    No global setting is touched.
     """
     if mode == "exact":
         conn.execute("SET LOCAL enable_indexscan = off", prepare=False)
@@ -267,7 +289,8 @@ def _configure_planner(conn: psycopg.Connection, mode: Mode) -> None:
     elif mode == "hnsw":
         conn.execute("SET LOCAL enable_seqscan = off", prepare=False)
         conn.execute("SET LOCAL enable_indexscan = on", prepare=False)
-        conn.execute("SET LOCAL enable_bitmapscan = on", prepare=False)
+        conn.execute("SET LOCAL enable_bitmapscan = off", prepare=False)
+        conn.execute("SET LOCAL enable_sort = off", prepare=False)
 
 
 def _set_statement_timeout(conn: psycopg.Connection, milliseconds: int) -> None:
@@ -295,7 +318,7 @@ def _capture_plan(
             with ef_search(conn, config.ef_search):
                 rows = conn.execute(
                     "EXPLAIN (ANALYZE, BUFFERS) " + DENSE_SEARCH_SQL,
-                    (Vector(list(vector)), config.top_k),
+                    (Vector(list(vector)), config.chunk_strategy, config.top_k),
                     prepare=False,
                 ).fetchall()
     finally:
@@ -342,22 +365,32 @@ def _run_query(
             started = time.perf_counter()
             rows = conn.execute(
                 DENSE_SEARCH_SQL,
-                (Vector(list(vector)), config.top_k),
+                (Vector(list(vector)), config.chunk_strategy, config.top_k),
                 prepare=False,
             ).fetchall()
             query_ms = (time.perf_counter() - started) * 1000.0
             actual_ef = current_ef_search(conn)
-    return _rows_to_hits(rows, config.top_k), actual_ef, query_ms
+    return _rows_to_hits(rows, config.top_k, config.chunk_strategy), actual_ef, query_ms
 
 
-def _rows_to_hits(rows: Sequence[Sequence[Any]], top_k: int) -> list[Hit]:
+def _rows_to_hits(
+    rows: Sequence[Sequence[Any]],
+    top_k: int,
+    expected_strategy: str | None = None,
+) -> list[Hit]:
     """Map SELECT columns to validated hits; reject a non-finite distance."""
     hits: list[Hit] = []
     for row in rows:
         try:
             distance = float(row[5])
+            strategy = str(row[2])
         except (TypeError, ValueError, IndexError) as exc:
             raise BenchmarkError(f"malformed retrieval row: {row!r}") from exc
+        if expected_strategy is not None and strategy != expected_strategy:
+            raise BenchmarkError(
+                f"retrieval returned chunk_strategy={strategy!r} for chunk {row[0]!r}, "
+                f"expected {expected_strategy!r}"
+            )
         if not math.isfinite(distance):
             raise BenchmarkError(f"non-finite distance for chunk {row[0]!r}")
         hits.append(
@@ -679,6 +712,7 @@ def run_dense_benchmark(
             "warmup_passes": warmup_passes,
             "statement_timeout_ms": statement_timeout_ms,
             "ef_search_values": [config.ef_search for config in configs if config.mode == "hnsw"],
+            "chunk_strategy": configs[0].chunk_strategy,
         },
         "definitions": _definitions(configs[0].top_k),
         "query_ids": [query.query_id for query in queries],
@@ -915,6 +949,11 @@ def _definitions(top_k: int) -> dict[str, Any]:
             "enable_bitmapscan=off, enable_indexonlyscan=off and enable_seqscan=on; "
             "verified to produce Seq Scan on chunks"
         ),
+        "hnsw_arm": (
+            "same query with transaction-local enable_seqscan=off, "
+            "enable_bitmapscan=off, enable_sort=off and enable_indexscan=on; the plan "
+            "must name chunks_embedding_hnsw_idx or the configuration is marked invalid"
+        ),
         "ann_recall": (
             "Recall@K of the ANN chunk keys against the exact cosine Top-K keys; "
             "denominator is the exact result count"
@@ -1004,7 +1043,8 @@ def render_markdown(result: Mapping[str, Any]) -> str:
         f"- Status: **{status}**",
         f"- Queries: {parameters.get('queries', '?')}  |  K: {parameters.get('top_k', '?')}  "
         f"|  Timed passes/config: {parameters.get('repetitions', '?')}  |  "
-        f"Statement timeout: {parameters.get('statement_timeout_ms', '?')} ms",
+        f"Statement timeout: {parameters.get('statement_timeout_ms', '?')} ms  |  "
+        f"Chunk strategy: `{parameters.get('chunk_strategy', '?')}`",
         "",
         "## 1. Environment and dataset",
         "",
@@ -1026,6 +1066,13 @@ def render_markdown(result: Mapping[str, Any]) -> str:
             f"{environment.get('documents', '?')} / {environment.get('chunks', '?')}",
         ),
         ("Distinct chunk doc_ids", environment.get("distinct_chunk_docs")),
+        (
+            "Scoped chunks / doc_ids",
+            f"{environment.get('strategy_chunks', '?')} / "
+            f"{environment.get('strategy_docs', '?')} "
+            f"(`{environment.get('chunk_strategy', '?')}`)",
+        ),
+        ("Chunk strategies in table", environment.get("chunk_strategies")),
         ("Eval queries", dataset.get("queries")),
         ("Gold sizes", dataset.get("gold_sizes")),
         ("Missing gold docs", dataset.get("missing_gold_docs")),
@@ -1321,8 +1368,15 @@ def write_outputs(
     result: Mapping[str, Any],
     json_path: Path,
     report_path: Path,
+    *,
+    overwrite: bool = False,
 ) -> None:
-    """Write the raw JSON artifact and the Markdown report, creating parents."""
+    """Write the raw JSON artifact and the Markdown report, creating parents.
+
+    Existing artifacts are never replaced unless ``overwrite`` is set, so a
+    historical report cannot be lost by an accidental re-run.
+    """
+    ensure_writable((json_path, report_path), overwrite=overwrite)
     json_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     json_path.write_text(

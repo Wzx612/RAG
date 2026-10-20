@@ -19,7 +19,14 @@ from pydantic import (
     model_validator,
 )
 
-ChunkStrategy = Literal["document", "fixed_window", "contextual"]
+ChunkStrategy = Literal["document", "fixed_window", "structured", "contextual"]
+RetrievalStrategy = Literal["document", "fixed_window", "structured"]
+"""Chunk strategies a retriever may scope itself to.
+
+``contextual`` is intentionally absent: it is a retired configuration name,
+not an algorithm, and only exists in ``ChunkStrategy`` for migration errors.
+"""
+
 FusionMethod = Literal["rrf", "weighted"]
 QueryMode = Literal["or", "and"]
 
@@ -104,15 +111,84 @@ class SearchHit(BaseModel):
 
 
 class ChunkingConfig(BaseModel):
-    """Knobs for the chunking comparison experiment (Experiment 5)."""
+    """Knobs for the chunking comparison experiment.
+
+    Lengths are measured in characters, matching the pure chunking functions.
+    Fixed-window and structured parameters coexist in one object because a
+    config names one strategy and the unused fields remain explicit defaults.
+
+    ``contextual`` remains a valid input only so that an old config fails with
+    an actionable migration message instead of a pydantic type error. It does
+    not select an algorithm; use ``strategy="document"`` with
+    ``context_header=True``.
+    """
+
+    model_config = ConfigDict(validate_assignment=True)
 
     strategy: ChunkStrategy = "document"
-    chunk_size: int = Field(default=256, description="Tokens, fixed_window only.")
-    chunk_overlap: int = Field(default=32, description="Tokens, fixed_window only.")
+    chunk_size: int = Field(
+        default=256,
+        ge=1,
+        description="Characters per fixed window; fixed_window only.",
+    )
+    chunk_overlap: int = Field(
+        default=64,
+        ge=0,
+        description="Characters shared by adjacent fixed windows; fixed_window only.",
+    )
+    min_tail: int = Field(
+        default=48,
+        ge=0,
+        description="Shortest fixed-window tail accepted without a left shift; fixed_window only.",
+    )
+    structured_target_chars: int = Field(
+        default=220,
+        ge=1,
+        description="Preferred packed length for structured chunks.",
+    )
+    structured_max_chars: int = Field(
+        default=360,
+        ge=1,
+        description="Hard upper bound for a normal structured chunk.",
+    )
+    structured_min_chars: int = Field(
+        default=60,
+        ge=0,
+        description="Shortest structured tail accepted without merging into its predecessor.",
+    )
     context_header: bool = Field(
         default=False,
         description="Prefix embedded_text with card tier / category / policy code.",
     )
+
+    @field_validator(
+        "chunk_size",
+        "chunk_overlap",
+        "min_tail",
+        "structured_target_chars",
+        "structured_max_chars",
+        "structured_min_chars",
+        mode="before",
+    )
+    @classmethod
+    def _reject_bool(cls, value: object, info: ValidationInfo) -> object:
+        """Reject ``True``/``False``: they are ints in Python but not lengths."""
+        if isinstance(value, bool):
+            raise ValueError(f"{info.field_name} must be an int, not a bool")
+        return value
+
+    @model_validator(mode="after")
+    def _validate_lengths(self) -> ChunkingConfig:
+        """Reject bounds that would make a strategy's behaviour ambiguous."""
+        if self.chunk_overlap >= self.chunk_size:
+            raise ValueError("chunk_overlap must be smaller than chunk_size")
+        if self.min_tail >= self.chunk_size:
+            raise ValueError("min_tail must be smaller than chunk_size")
+        if self.structured_target_chars > self.structured_max_chars:
+            raise ValueError("structured_target_chars must not exceed structured_max_chars")
+        if self.structured_min_chars > self.structured_target_chars:
+            raise ValueError("structured_min_chars must not exceed structured_target_chars")
+        return self
 
 
 class DenseConfig(BaseModel):
@@ -130,6 +206,13 @@ class DenseConfig(BaseModel):
 
     model_config = ConfigDict(validate_assignment=True)
 
+    chunk_strategy: RetrievalStrategy = Field(
+        default="document",
+        description=(
+            "Chunking strategy this retriever may see. The chunks table can hold "
+            "several strategies at once, so every query must name one."
+        ),
+    )
     top_n: int = Field(
         default=50,
         ge=1,
@@ -176,6 +259,13 @@ class SparseConfig(BaseModel):
 
     model_config = ConfigDict(validate_assignment=True)
 
+    chunk_strategy: RetrievalStrategy = Field(
+        default="document",
+        description=(
+            "Chunking strategy this retriever may see. The chunks table can hold "
+            "several strategies at once, so every query must name one."
+        ),
+    )
     top_n: int = Field(
         default=50,
         ge=1,

@@ -1,0 +1,1902 @@
+{
+  "schema_version": 1,
+  "experiment_name": "unified_retrieval_benchmark",
+  "generated_at": "2026-10-20T03:59:49.129746+00:00",
+  "status": "PASS",
+  "status_reason": "all arms evaluated every expected query",
+  "parameters": {
+    "top_k": 5,
+    "candidate_k": 20,
+    "rrf_k": 60,
+    "chunk_strategy": "document",
+    "expected_queries": 30,
+    "queries": 30,
+    "arms": [
+      "rrf",
+      "rrf_rerank"
+    ]
+  },
+  "definitions": {
+    "labels_exhaustive": false,
+    "relevance_scheme": "binary_known_gold",
+    "metric_version": 2,
+    "recall": "set-based; denominator = distinct gold docs; document-level dedupe",
+    "precision": "known-gold hits / k; non-gold ids are unlabelled, not negatives",
+    "ndcg": "binary relevance; ideal DCG capped by k",
+    "mrr": "1 / rank of the first relevant doc within k; 0.0 on a miss",
+    "latency": "wall-clock per query, single process, sequential"
+  },
+  "environment": {
+    "postgres_version": "16.14 (Debian 16.14-1.pgdg12+1)",
+    "vector_version": "0.8.2",
+    "server_address": "172.22.0.2/32:5432",
+    "documents": 150,
+    "chunks": 578,
+    "embedding_dimensions": [
+      1024
+    ],
+    "embedding_model": "BAAI/bge-large-en-v1.5",
+    "embedding_device": "cpu",
+    "hostname": "41c1835fa567",
+    "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+    "python_version": "3.12.13",
+    "packages": {
+      "sentence-transformers": "6.1.0",
+      "torch": "2.14.1+cpu",
+      "transformers": "5.20.0",
+      "psycopg": "3.3.6"
+    },
+    "reranker": {
+      "model_id": "BAAI/bge-reranker-base",
+      "revision": "2cfc18c9415c912f9d8155881c133215df768a70",
+      "device": "cpu"
+    }
+  },
+  "dataset": {
+    "queries": 30,
+    "eval_queries_on_disk": 30,
+    "query_limit": null,
+    "gold_docs": 38,
+    "hashes": {
+      "kb_documents.json": "7d230e97cbf76d2ca64382e7c0278c3b24bbe27b8a8904abc9553b45a230057d",
+      "eval_queries.json": "739bd308a90e72437ccbffca658ca950f6a069f2986040cb729694a878d9bbef"
+    }
+  },
+  "arms": [
+    {
+      "name": "rrf",
+      "description": "Dense + sparse OR fused with reciprocal rank fusion",
+      "parameters": {
+        "top_k": 5,
+        "candidate_k": 20,
+        "rrf_k": 60,
+        "chunk_strategy": "document"
+      },
+      "status": "PASS",
+      "metrics": {
+        "recall_at_k": {
+          "macro": 0.9555555555555556,
+          "micro": 0.9069767441860465
+        },
+        "precision_at_k": {
+          "macro": 0.26,
+          "micro": 0.26,
+          "ceiling_macro": 0.2866666666666667
+        },
+        "ndcg_at_k": {
+          "macro": 0.9203621855772807
+        },
+        "mrr": 0.95,
+        "hit_at_1": 27,
+        "hit_at_k": 30,
+        "evaluated_queries": 30,
+        "failed_queries": 0
+      },
+      "latency_ms": {
+        "query": {
+          "n": 30,
+          "min": 76.1119,
+          "p50": 89.4622,
+          "p95": 109.553,
+          "p99": 112.8697,
+          "max": 112.8697,
+          "mean": 91.50294000000001
+        }
+      },
+      "failed_queries": [],
+      "per_query": [
+        {
+          "query_id": "Q-001",
+          "chunk_keys": [
+            "document:DOC-0001",
+            "document:DOC-0005",
+            "document:DOC-0002",
+            "document:DOC-0009",
+            "document:DOC-0013"
+          ],
+          "doc_ids": [
+            "DOC-0001",
+            "DOC-0005",
+            "DOC-0002",
+            "DOC-0009",
+            "DOC-0013"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 85.0853,
+          "gold_size": 2,
+          "gold_retrieved": 2,
+          "recall": 1.0,
+          "precision": 0.4,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-002",
+          "chunk_keys": [
+            "document:DOC-0014",
+            "document:DOC-0003",
+            "document:DOC-0037",
+            "document:DOC-0006",
+            "document:DOC-0033"
+          ],
+          "doc_ids": [
+            "DOC-0014",
+            "DOC-0003",
+            "DOC-0037",
+            "DOC-0006",
+            "DOC-0033"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 85.8534,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 0.6309297535714575,
+          "reciprocal_rank": 0.5,
+          "hit_at_1": 0,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-003",
+          "chunk_keys": [
+            "document:DOC-0005",
+            "document:DOC-0001",
+            "document:DOC-0009",
+            "document:DOC-0013",
+            "document:DOC-0004"
+          ],
+          "doc_ids": [
+            "DOC-0005",
+            "DOC-0001",
+            "DOC-0009",
+            "DOC-0013",
+            "DOC-0004"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 88.8145,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-004",
+          "chunk_keys": [
+            "document:DOC-0016",
+            "document:DOC-0019",
+            "document:DOC-0018",
+            "document:DOC-0030",
+            "document:DOC-0028"
+          ],
+          "doc_ids": [
+            "DOC-0016",
+            "DOC-0019",
+            "DOC-0018",
+            "DOC-0030",
+            "DOC-0028"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 94.4734,
+          "gold_size": 3,
+          "gold_retrieved": 2,
+          "recall": 0.6666666666666666,
+          "precision": 0.4,
+          "ndcg": 0.7039180890341347,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-005",
+          "chunk_keys": [
+            "document:DOC-0020",
+            "document:DOC-0023",
+            "document:DOC-0022",
+            "document:DOC-0024",
+            "document:DOC-0027"
+          ],
+          "doc_ids": [
+            "DOC-0020",
+            "DOC-0023",
+            "DOC-0022",
+            "DOC-0024",
+            "DOC-0027"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 89.4622,
+          "gold_size": 3,
+          "gold_retrieved": 2,
+          "recall": 0.6666666666666666,
+          "precision": 0.4,
+          "ndcg": 0.7039180890341347,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-006",
+          "chunk_keys": [
+            "document:DOC-0024",
+            "document:DOC-0027",
+            "document:DOC-0026",
+            "document:DOC-0025",
+            "document:DOC-0020"
+          ],
+          "doc_ids": [
+            "DOC-0024",
+            "DOC-0027",
+            "DOC-0026",
+            "DOC-0025",
+            "DOC-0020"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 76.1119,
+          "gold_size": 3,
+          "gold_retrieved": 3,
+          "recall": 1.0,
+          "precision": 0.6,
+          "ndcg": 0.9060254355346823,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-007",
+          "chunk_keys": [
+            "document:DOC-0031",
+            "document:DOC-0035",
+            "document:DOC-0032",
+            "document:DOC-0039",
+            "document:DOC-0104"
+          ],
+          "doc_ids": [
+            "DOC-0031",
+            "DOC-0035",
+            "DOC-0032",
+            "DOC-0039",
+            "DOC-0104"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 104.7897,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-008",
+          "chunk_keys": [
+            "document:DOC-0036",
+            "document:DOC-0032",
+            "document:DOC-0035",
+            "document:DOC-0062",
+            "document:DOC-0040"
+          ],
+          "doc_ids": [
+            "DOC-0036",
+            "DOC-0032",
+            "DOC-0035",
+            "DOC-0062",
+            "DOC-0040"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 94.516,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-009",
+          "chunk_keys": [
+            "document:DOC-0041",
+            "document:DOC-0147",
+            "document:DOC-0145",
+            "document:DOC-0039",
+            "document:DOC-0149"
+          ],
+          "doc_ids": [
+            "DOC-0041",
+            "DOC-0147",
+            "DOC-0145",
+            "DOC-0039",
+            "DOC-0149"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 92.1453,
+          "gold_size": 3,
+          "gold_retrieved": 2,
+          "recall": 0.6666666666666666,
+          "precision": 0.4,
+          "ndcg": 0.6713860725233041,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-010",
+          "chunk_keys": [
+            "document:DOC-0046",
+            "document:DOC-0049",
+            "document:DOC-0050",
+            "document:DOC-0035",
+            "document:DOC-0060"
+          ],
+          "doc_ids": [
+            "DOC-0046",
+            "DOC-0049",
+            "DOC-0050",
+            "DOC-0035",
+            "DOC-0060"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 92.1928,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-011",
+          "chunk_keys": [
+            "document:DOC-0050",
+            "document:DOC-0052",
+            "document:DOC-0053",
+            "document:DOC-0051",
+            "document:DOC-0086"
+          ],
+          "doc_ids": [
+            "DOC-0050",
+            "DOC-0052",
+            "DOC-0053",
+            "DOC-0051",
+            "DOC-0086"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 87.6004,
+          "gold_size": 3,
+          "gold_retrieved": 3,
+          "recall": 1.0,
+          "precision": 0.6,
+          "ndcg": 0.9674679834891693,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-012",
+          "chunk_keys": [
+            "document:DOC-0054",
+            "document:DOC-0057",
+            "document:DOC-0101",
+            "document:DOC-0065",
+            "document:DOC-0114"
+          ],
+          "doc_ids": [
+            "DOC-0054",
+            "DOC-0057",
+            "DOC-0101",
+            "DOC-0065",
+            "DOC-0114"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 97.7827,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-013",
+          "chunk_keys": [
+            "document:DOC-0061",
+            "document:DOC-0062",
+            "document:DOC-0063",
+            "document:DOC-0054",
+            "document:DOC-0035"
+          ],
+          "doc_ids": [
+            "DOC-0061",
+            "DOC-0062",
+            "DOC-0063",
+            "DOC-0054",
+            "DOC-0035"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 91.6691,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-014",
+          "chunk_keys": [
+            "document:DOC-0065",
+            "document:DOC-0066",
+            "document:DOC-0110",
+            "document:DOC-0114",
+            "document:DOC-0106"
+          ],
+          "doc_ids": [
+            "DOC-0065",
+            "DOC-0066",
+            "DOC-0110",
+            "DOC-0114",
+            "DOC-0106"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 76.8073,
+          "gold_size": 3,
+          "gold_retrieved": 2,
+          "recall": 0.6666666666666666,
+          "precision": 0.4,
+          "ndcg": 0.7653606369886217,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-015",
+          "chunk_keys": [
+            "document:DOC-0065",
+            "document:DOC-0066",
+            "document:DOC-0114",
+            "document:DOC-0115",
+            "document:DOC-0110"
+          ],
+          "doc_ids": [
+            "DOC-0065",
+            "DOC-0066",
+            "DOC-0114",
+            "DOC-0115",
+            "DOC-0110"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 90.5402,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-016",
+          "chunk_keys": [
+            "document:DOC-0031",
+            "document:DOC-0076",
+            "document:DOC-0035",
+            "document:DOC-0039",
+            "document:DOC-0084"
+          ],
+          "doc_ids": [
+            "DOC-0031",
+            "DOC-0076",
+            "DOC-0035",
+            "DOC-0039",
+            "DOC-0084"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 82.9883,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 0.6309297535714575,
+          "reciprocal_rank": 0.5,
+          "hit_at_1": 0,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-017",
+          "chunk_keys": [
+            "document:DOC-0033",
+            "document:DOC-0077",
+            "document:DOC-0044",
+            "document:DOC-0037",
+            "document:DOC-0041"
+          ],
+          "doc_ids": [
+            "DOC-0033",
+            "DOC-0077",
+            "DOC-0044",
+            "DOC-0037",
+            "DOC-0041"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 86.2706,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 0.6309297535714575,
+          "reciprocal_rank": 0.5,
+          "hit_at_1": 0,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-018",
+          "chunk_keys": [
+            "document:DOC-0094",
+            "document:DOC-0096",
+            "document:DOC-0095",
+            "document:DOC-0091",
+            "document:DOC-0046"
+          ],
+          "doc_ids": [
+            "DOC-0094",
+            "DOC-0096",
+            "DOC-0095",
+            "DOC-0091",
+            "DOC-0046"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 81.0714,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-019",
+          "chunk_keys": [
+            "document:DOC-0058",
+            "document:DOC-0060",
+            "document:DOC-0059",
+            "document:DOC-0031",
+            "document:DOC-0050"
+          ],
+          "doc_ids": [
+            "DOC-0058",
+            "DOC-0060",
+            "DOC-0059",
+            "DOC-0031",
+            "DOC-0050"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 84.6051,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-020",
+          "chunk_keys": [
+            "document:DOC-0099",
+            "document:DOC-0091",
+            "document:DOC-0097",
+            "document:DOC-0046",
+            "document:DOC-0101"
+          ],
+          "doc_ids": [
+            "DOC-0099",
+            "DOC-0091",
+            "DOC-0097",
+            "DOC-0046",
+            "DOC-0101"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 88.5441,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-021",
+          "chunk_keys": [
+            "document:DOC-0037",
+            "document:DOC-0033",
+            "document:DOC-0044",
+            "document:DOC-0035",
+            "document:DOC-0041"
+          ],
+          "doc_ids": [
+            "DOC-0037",
+            "DOC-0033",
+            "DOC-0044",
+            "DOC-0035",
+            "DOC-0041"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 94.2658,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-022",
+          "chunk_keys": [
+            "document:DOC-0043",
+            "document:DOC-0031",
+            "document:DOC-0035",
+            "document:DOC-0039",
+            "document:DOC-0001"
+          ],
+          "doc_ids": [
+            "DOC-0043",
+            "DOC-0031",
+            "DOC-0035",
+            "DOC-0039",
+            "DOC-0001"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 112.8697,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-023",
+          "chunk_keys": [
+            "document:DOC-0057",
+            "document:DOC-0126",
+            "document:DOC-0030",
+            "document:DOC-0087",
+            "document:DOC-0102"
+          ],
+          "doc_ids": [
+            "DOC-0057",
+            "DOC-0126",
+            "DOC-0030",
+            "DOC-0087",
+            "DOC-0102"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 87.0897,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-024",
+          "chunk_keys": [
+            "document:DOC-0073",
+            "document:DOC-0114",
+            "document:DOC-0065",
+            "document:DOC-0031",
+            "document:DOC-0117"
+          ],
+          "doc_ids": [
+            "DOC-0073",
+            "DOC-0114",
+            "DOC-0065",
+            "DOC-0031",
+            "DOC-0117"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 102.683,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-025",
+          "chunk_keys": [
+            "document:DOC-0024",
+            "document:DOC-0025",
+            "document:DOC-0027",
+            "document:DOC-0020",
+            "document:DOC-0026"
+          ],
+          "doc_ids": [
+            "DOC-0024",
+            "DOC-0025",
+            "DOC-0027",
+            "DOC-0020",
+            "DOC-0026"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 95.2132,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-026",
+          "chunk_keys": [
+            "document:DOC-0061",
+            "document:DOC-0043",
+            "document:DOC-0101",
+            "document:DOC-0090",
+            "document:DOC-0005"
+          ],
+          "doc_ids": [
+            "DOC-0061",
+            "DOC-0043",
+            "DOC-0101",
+            "DOC-0090",
+            "DOC-0005"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 106.1657,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-027",
+          "chunk_keys": [
+            "document:DOC-0106",
+            "document:DOC-0065",
+            "document:DOC-0110",
+            "document:DOC-0024",
+            "document:DOC-0084"
+          ],
+          "doc_ids": [
+            "DOC-0106",
+            "DOC-0065",
+            "DOC-0110",
+            "DOC-0024",
+            "DOC-0084"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 83.8974,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-028",
+          "chunk_keys": [
+            "document:DOC-0149",
+            "document:DOC-0041",
+            "document:DOC-0142",
+            "document:DOC-0044",
+            "document:DOC-0033"
+          ],
+          "doc_ids": [
+            "DOC-0149",
+            "DOC-0041",
+            "DOC-0142",
+            "DOC-0044",
+            "DOC-0033"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 93.1412,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-029",
+          "chunk_keys": [
+            "document:DOC-0060",
+            "document:DOC-0032",
+            "document:DOC-0036",
+            "document:DOC-0040",
+            "document:DOC-0025"
+          ],
+          "doc_ids": [
+            "DOC-0060",
+            "DOC-0032",
+            "DOC-0036",
+            "DOC-0040",
+            "DOC-0025"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 109.553,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-030",
+          "chunk_keys": [
+            "document:DOC-0039",
+            "document:DOC-0001",
+            "document:DOC-0150",
+            "document:DOC-0136",
+            "document:DOC-0009"
+          ],
+          "doc_ids": [
+            "DOC-0039",
+            "DOC-0001",
+            "DOC-0150",
+            "DOC-0136",
+            "DOC-0009"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 88.8858,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        }
+      ]
+    },
+    {
+      "name": "rrf_rerank",
+      "description": "RRF candidate pool reranked by a cross-encoder",
+      "parameters": {
+        "top_k": 5,
+        "candidate_k": 20,
+        "rrf_k": 60,
+        "chunk_strategy": "document",
+        "rerank": true
+      },
+      "status": "PASS",
+      "metrics": {
+        "recall_at_k": {
+          "macro": 1.0,
+          "micro": 1.0
+        },
+        "precision_at_k": {
+          "macro": 0.2866666666666667,
+          "micro": 0.2866666666666667,
+          "ceiling_macro": 0.2866666666666667
+        },
+        "ndcg_at_k": {
+          "macro": 0.9776720121353416
+        },
+        "mrr": 0.9833333333333333,
+        "hit_at_1": 29,
+        "hit_at_k": 30,
+        "evaluated_queries": 30,
+        "failed_queries": 0
+      },
+      "latency_ms": {
+        "query": {
+          "n": 30,
+          "min": 1431.0617,
+          "p50": 1790.9155,
+          "p95": 2038.505,
+          "p99": 4683.3748,
+          "max": 4683.3748,
+          "mean": 1837.5533133333333
+        }
+      },
+      "failed_queries": [],
+      "per_query": [
+        {
+          "query_id": "Q-001",
+          "chunk_keys": [
+            "document:DOC-0001",
+            "document:DOC-0003",
+            "document:DOC-0002",
+            "document:DOC-0004",
+            "document:DOC-0005"
+          ],
+          "doc_ids": [
+            "DOC-0001",
+            "DOC-0003",
+            "DOC-0002",
+            "DOC-0004",
+            "DOC-0005"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 4683.3748,
+          "gold_size": 2,
+          "gold_retrieved": 2,
+          "recall": 1.0,
+          "precision": 0.4,
+          "ndcg": 0.8503449055347546,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-002",
+          "chunk_keys": [
+            "document:DOC-0003",
+            "document:DOC-0014",
+            "document:DOC-0011",
+            "document:DOC-0041",
+            "document:DOC-0037"
+          ],
+          "doc_ids": [
+            "DOC-0003",
+            "DOC-0014",
+            "DOC-0011",
+            "DOC-0041",
+            "DOC-0037"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1927.2072,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-003",
+          "chunk_keys": [
+            "document:DOC-0005",
+            "document:DOC-0007",
+            "document:DOC-0001",
+            "document:DOC-0008",
+            "document:DOC-0006"
+          ],
+          "doc_ids": [
+            "DOC-0005",
+            "DOC-0007",
+            "DOC-0001",
+            "DOC-0008",
+            "DOC-0006"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1897.1037,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-004",
+          "chunk_keys": [
+            "document:DOC-0018",
+            "document:DOC-0016",
+            "document:DOC-0019",
+            "document:DOC-0017",
+            "document:DOC-0025"
+          ],
+          "doc_ids": [
+            "DOC-0018",
+            "DOC-0016",
+            "DOC-0019",
+            "DOC-0017",
+            "DOC-0025"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1707.2762,
+          "gold_size": 3,
+          "gold_retrieved": 3,
+          "recall": 1.0,
+          "precision": 0.6,
+          "ndcg": 0.9674679834891693,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-005",
+          "chunk_keys": [
+            "document:DOC-0020",
+            "document:DOC-0023",
+            "document:DOC-0022",
+            "document:DOC-0021",
+            "document:DOC-0025"
+          ],
+          "doc_ids": [
+            "DOC-0020",
+            "DOC-0023",
+            "DOC-0022",
+            "DOC-0021",
+            "DOC-0025"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1791.5998,
+          "gold_size": 3,
+          "gold_retrieved": 3,
+          "recall": 1.0,
+          "precision": 0.6,
+          "ndcg": 0.9060254355346823,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-006",
+          "chunk_keys": [
+            "document:DOC-0024",
+            "document:DOC-0027",
+            "document:DOC-0025",
+            "document:DOC-0026",
+            "document:DOC-0016"
+          ],
+          "doc_ids": [
+            "DOC-0024",
+            "DOC-0027",
+            "DOC-0025",
+            "DOC-0026",
+            "DOC-0016"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1718.35,
+          "gold_size": 3,
+          "gold_retrieved": 3,
+          "recall": 1.0,
+          "precision": 0.6,
+          "ndcg": 0.9060254355346823,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-007",
+          "chunk_keys": [
+            "document:DOC-0031",
+            "document:DOC-0032",
+            "document:DOC-0076",
+            "document:DOC-0033",
+            "document:DOC-0034"
+          ],
+          "doc_ids": [
+            "DOC-0031",
+            "DOC-0032",
+            "DOC-0076",
+            "DOC-0033",
+            "DOC-0034"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 2038.505,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-008",
+          "chunk_keys": [
+            "document:DOC-0036",
+            "document:DOC-0035",
+            "document:DOC-0038",
+            "document:DOC-0078",
+            "document:DOC-0037"
+          ],
+          "doc_ids": [
+            "DOC-0036",
+            "DOC-0035",
+            "DOC-0038",
+            "DOC-0078",
+            "DOC-0037"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1501.0562,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-009",
+          "chunk_keys": [
+            "document:DOC-0040",
+            "document:DOC-0041",
+            "document:DOC-0039",
+            "document:DOC-0042",
+            "document:DOC-0147"
+          ],
+          "doc_ids": [
+            "DOC-0040",
+            "DOC-0041",
+            "DOC-0039",
+            "DOC-0042",
+            "DOC-0147"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1636.8537,
+          "gold_size": 3,
+          "gold_retrieved": 3,
+          "recall": 1.0,
+          "precision": 0.6,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-010",
+          "chunk_keys": [
+            "document:DOC-0046",
+            "document:DOC-0049",
+            "document:DOC-0076",
+            "document:DOC-0058",
+            "document:DOC-0047"
+          ],
+          "doc_ids": [
+            "DOC-0046",
+            "DOC-0049",
+            "DOC-0076",
+            "DOC-0058",
+            "DOC-0047"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1816.7123,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-011",
+          "chunk_keys": [
+            "document:DOC-0053",
+            "document:DOC-0051",
+            "document:DOC-0050",
+            "document:DOC-0052",
+            "document:DOC-0065"
+          ],
+          "doc_ids": [
+            "DOC-0053",
+            "DOC-0051",
+            "DOC-0050",
+            "DOC-0052",
+            "DOC-0065"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1860.6527,
+          "gold_size": 3,
+          "gold_retrieved": 3,
+          "recall": 1.0,
+          "precision": 0.6,
+          "ndcg": 0.7328286204777911,
+          "reciprocal_rank": 0.5,
+          "hit_at_1": 0,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-012",
+          "chunk_keys": [
+            "document:DOC-0054",
+            "document:DOC-0057",
+            "document:DOC-0055",
+            "document:DOC-0101",
+            "document:DOC-0094"
+          ],
+          "doc_ids": [
+            "DOC-0054",
+            "DOC-0057",
+            "DOC-0055",
+            "DOC-0101",
+            "DOC-0094"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1701.661,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-013",
+          "chunk_keys": [
+            "document:DOC-0061",
+            "document:DOC-0062",
+            "document:DOC-0063",
+            "document:DOC-0064",
+            "document:DOC-0071"
+          ],
+          "doc_ids": [
+            "DOC-0061",
+            "DOC-0062",
+            "DOC-0063",
+            "DOC-0064",
+            "DOC-0071"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1890.8022,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-014",
+          "chunk_keys": [
+            "document:DOC-0065",
+            "document:DOC-0066",
+            "document:DOC-0068",
+            "document:DOC-0067",
+            "document:DOC-0044"
+          ],
+          "doc_ids": [
+            "DOC-0065",
+            "DOC-0066",
+            "DOC-0068",
+            "DOC-0067",
+            "DOC-0044"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1790.9155,
+          "gold_size": 3,
+          "gold_retrieved": 3,
+          "recall": 1.0,
+          "precision": 0.6,
+          "ndcg": 0.9674679834891693,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-015",
+          "chunk_keys": [
+            "document:DOC-0065",
+            "document:DOC-0066",
+            "document:DOC-0120",
+            "document:DOC-0115",
+            "document:DOC-0114"
+          ],
+          "doc_ids": [
+            "DOC-0065",
+            "DOC-0066",
+            "DOC-0120",
+            "DOC-0115",
+            "DOC-0114"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1572.6315,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-016",
+          "chunk_keys": [
+            "document:DOC-0076",
+            "document:DOC-0078",
+            "document:DOC-0077",
+            "document:DOC-0031",
+            "document:DOC-0035"
+          ],
+          "doc_ids": [
+            "DOC-0076",
+            "DOC-0078",
+            "DOC-0077",
+            "DOC-0031",
+            "DOC-0035"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1846.1526,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-017",
+          "chunk_keys": [
+            "document:DOC-0077",
+            "document:DOC-0033",
+            "document:DOC-0014",
+            "document:DOC-0037",
+            "document:DOC-0075"
+          ],
+          "doc_ids": [
+            "DOC-0077",
+            "DOC-0033",
+            "DOC-0014",
+            "DOC-0037",
+            "DOC-0075"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1431.0617,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-018",
+          "chunk_keys": [
+            "document:DOC-0094",
+            "document:DOC-0096",
+            "document:DOC-0097",
+            "document:DOC-0101",
+            "document:DOC-0091"
+          ],
+          "doc_ids": [
+            "DOC-0094",
+            "DOC-0096",
+            "DOC-0097",
+            "DOC-0101",
+            "DOC-0091"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1823.7921,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-019",
+          "chunk_keys": [
+            "document:DOC-0058",
+            "document:DOC-0060",
+            "document:DOC-0059",
+            "document:DOC-0050",
+            "document:DOC-0106"
+          ],
+          "doc_ids": [
+            "DOC-0058",
+            "DOC-0060",
+            "DOC-0059",
+            "DOC-0050",
+            "DOC-0106"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1714.1569,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-020",
+          "chunk_keys": [
+            "document:DOC-0099",
+            "document:DOC-0091",
+            "document:DOC-0100",
+            "document:DOC-0097",
+            "document:DOC-0058"
+          ],
+          "doc_ids": [
+            "DOC-0099",
+            "DOC-0091",
+            "DOC-0100",
+            "DOC-0097",
+            "DOC-0058"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1808.0005,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-021",
+          "chunk_keys": [
+            "document:DOC-0037",
+            "document:DOC-0033",
+            "document:DOC-0041",
+            "document:DOC-0003",
+            "document:DOC-0044"
+          ],
+          "doc_ids": [
+            "DOC-0037",
+            "DOC-0033",
+            "DOC-0041",
+            "DOC-0003",
+            "DOC-0044"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1476.7473,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-022",
+          "chunk_keys": [
+            "document:DOC-0043",
+            "document:DOC-0031",
+            "document:DOC-0001",
+            "document:DOC-0039",
+            "document:DOC-0035"
+          ],
+          "doc_ids": [
+            "DOC-0043",
+            "DOC-0031",
+            "DOC-0001",
+            "DOC-0039",
+            "DOC-0035"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1815.873,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-023",
+          "chunk_keys": [
+            "document:DOC-0057",
+            "document:DOC-0030",
+            "document:DOC-0126",
+            "document:DOC-0102",
+            "document:DOC-0056"
+          ],
+          "doc_ids": [
+            "DOC-0057",
+            "DOC-0030",
+            "DOC-0126",
+            "DOC-0102",
+            "DOC-0056"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1514.4794,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-024",
+          "chunk_keys": [
+            "document:DOC-0073",
+            "document:DOC-0121",
+            "document:DOC-0114",
+            "document:DOC-0117",
+            "document:DOC-0065"
+          ],
+          "doc_ids": [
+            "DOC-0073",
+            "DOC-0121",
+            "DOC-0114",
+            "DOC-0117",
+            "DOC-0065"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1829.232,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-025",
+          "chunk_keys": [
+            "document:DOC-0024",
+            "document:DOC-0025",
+            "document:DOC-0027",
+            "document:DOC-0022",
+            "document:DOC-0016"
+          ],
+          "doc_ids": [
+            "DOC-0024",
+            "DOC-0025",
+            "DOC-0027",
+            "DOC-0022",
+            "DOC-0016"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1847.1394,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-026",
+          "chunk_keys": [
+            "document:DOC-0061",
+            "document:DOC-0062",
+            "document:DOC-0065",
+            "document:DOC-0091",
+            "document:DOC-0050"
+          ],
+          "doc_ids": [
+            "DOC-0061",
+            "DOC-0062",
+            "DOC-0065",
+            "DOC-0091",
+            "DOC-0050"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1895.998,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-027",
+          "chunk_keys": [
+            "document:DOC-0106",
+            "document:DOC-0024",
+            "document:DOC-0110",
+            "document:DOC-0108",
+            "document:DOC-0065"
+          ],
+          "doc_ids": [
+            "DOC-0106",
+            "DOC-0024",
+            "DOC-0110",
+            "DOC-0108",
+            "DOC-0065"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1735.8406,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-028",
+          "chunk_keys": [
+            "document:DOC-0149",
+            "document:DOC-0138",
+            "document:DOC-0041",
+            "document:DOC-0044",
+            "document:DOC-0145"
+          ],
+          "doc_ids": [
+            "DOC-0149",
+            "DOC-0138",
+            "DOC-0041",
+            "DOC-0044",
+            "DOC-0145"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1446.6333,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-029",
+          "chunk_keys": [
+            "document:DOC-0060",
+            "document:DOC-0107",
+            "document:DOC-0059",
+            "document:DOC-0025",
+            "document:DOC-0066"
+          ],
+          "doc_ids": [
+            "DOC-0060",
+            "DOC-0107",
+            "DOC-0059",
+            "DOC-0025",
+            "DOC-0066"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1618.6719,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        },
+        {
+          "query_id": "Q-030",
+          "chunk_keys": [
+            "document:DOC-0039",
+            "document:DOC-0138",
+            "document:DOC-0150",
+            "document:DOC-0136",
+            "document:DOC-0009"
+          ],
+          "doc_ids": [
+            "DOC-0039",
+            "DOC-0138",
+            "DOC-0150",
+            "DOC-0136",
+            "DOC-0009"
+          ],
+          "result_count": 5,
+          "unique_docs": 5,
+          "error": null,
+          "latency_ms": 1788.1189,
+          "gold_size": 1,
+          "gold_retrieved": 1,
+          "recall": 1.0,
+          "precision": 0.2,
+          "ndcg": 1.0,
+          "reciprocal_rank": 1.0,
+          "hit_at_1": 1,
+          "hit_at_k": 1
+        }
+      ]
+    }
+  ],
+  "embedding": {
+    "model_id": "BAAI/bge-large-en-v1.5",
+    "dimension": 1024,
+    "model_load_ms": 10433.579,
+    "warm_encode_ms": 148.387
+  }
+}

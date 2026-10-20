@@ -41,7 +41,7 @@ from typing import Any
 
 from src.config import PROJECT_ROOT, Settings, get_settings
 from src.evaluation.dense_benchmark import BenchmarkError, EvalQuery
-from src.evaluation.metrics import percentile
+from src.evaluation.metrics import latency_summary
 from src.rag.pipeline import RAGPipeline
 from src.schema.rag import RAGAnswer
 
@@ -147,6 +147,7 @@ def run_rag_benchmark(
             "max_chunk_chars": config.max_chunk_chars,
             "provider_kind": config.provider_kind,
             "retrieval_mode": config.retrieval_mode,
+            "chunk_strategy": settings.retrieval_chunk_strategy,
             "queries": len(queries),
             "all_dataset_queries": len(raw_queries),
             "prompt_version": pipeline.config.prompt_version,
@@ -199,7 +200,13 @@ def run_rag_benchmark(
             "data_hashes_before": dict(dataset.get("hashes", {})),
             "database_counts_before": {
                 key: environment.get(key)
-                for key in ("documents", "chunks", "distinct_chunk_docs")
+                for key in (
+                    "documents",
+                    "chunks",
+                    "distinct_chunk_docs",
+                    "strategy_chunks",
+                    "strategy_docs",
+                )
             },
         },
         "limitations": _limitations(real, settings, config),
@@ -448,13 +455,13 @@ def _metrics(summary: Mapping[str, Any], records: Sequence[Mapping[str, Any]]) -
 
 
 def _latency(samples: Sequence[float]) -> dict[str, Any]:
-    """Return P50/P95 and the sample count, or nulls when no sample exists."""
-    if not samples:
-        return {"p50": None, "p95": None, "samples": 0}
+    """Return P50/P95/P99 and the sample count, or nulls when no sample exists."""
+    summary = latency_summary(samples)
     return {
-        "p50": percentile(samples, 50),
-        "p95": percentile(samples, 95),
-        "samples": len(samples),
+        "p50": summary["p50"],
+        "p95": summary["p95"],
+        "p99": summary["p99"],
+        "samples": summary["n"],
     }
 
 
@@ -628,8 +635,8 @@ def render_markdown(result: Mapping[str, Any]) -> str:
                 f"max_context_chars={parameters['max_context_chars']}",
             ),
             "",
-            "| 延迟（ms） | P50 | P95 | 样本数 | 口径 |",
-            "|---|---|---|---|---|",
+            "| 延迟（ms） | P50 | P95 | P99 | 样本数 | 口径 |",
+            "|---|---|---|---|---|---|",
             *_latency_rows(metrics["latency_ms"]),
             "",
             "**未计算：** answer correctness、Faithfulness、Answer Relevance。数据集只有 "
@@ -810,6 +817,7 @@ def _latency_rows(payload: Mapping[str, Any]) -> list[str]:
         item = payload[key]
         rows.append(
             f"| {key} | {_fmt(item['p50'])} | {_fmt(item['p95'])} | "
+            f"{_fmt(item['p99'])} | "
             f"{item['samples']} | {payload['timing_scope']} |"
         )
     return rows

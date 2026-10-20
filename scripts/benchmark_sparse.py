@@ -39,6 +39,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import psycopg  # noqa: E402
 from src.config import PROJECT_ROOT, get_settings  # noqa: E402
 from src.db import connection, scalar  # noqa: E402
+from src.evaluation.artifacts import ArtifactExistsError, ensure_writable  # noqa: E402
 from src.evaluation.dense_benchmark import (  # noqa: E402
     BenchmarkError,
     EvalQuery,
@@ -63,6 +64,32 @@ DEFAULT_OUTPUT = PROJECT_ROOT / "reports" / "sparse_benchmark.json"
 DEFAULT_REPORT = PROJECT_ROOT / "reports" / "sparse_benchmark.md"
 DEFAULT_DENSE_ARTIFACT = PROJECT_ROOT / "reports" / "dense_benchmark.json"
 
+
+class _ArtifactWriter:
+    """Write this benchmark's artifacts once, honouring the safety flags.
+
+    ``--no-write`` suppresses every write, including blocked artifacts, so a
+    smoke run cannot touch the historical reports. ``--overwrite`` is the only
+    way to replace an existing artifact.
+    """
+
+    def __init__(
+        self, output: Path, report: Path, *, overwrite: bool, enabled: bool
+    ) -> None:
+        """Store the targets and the two safety flags."""
+        self.output = output
+        self.report = report
+        self.overwrite = overwrite
+        self.enabled = enabled
+
+    def __call__(self, payload: dict[str, Any]) -> None:
+        """Write both artifacts, or print that the write was skipped."""
+        if not self.enabled:
+            print("--no-write: artifacts were not written")
+            return
+        write_outputs(payload, self.output, self.report, overwrite=self.overwrite)
+        print(f"Wrote {self.output} and {self.report}")
+
 # Synthetic Chinese probes. They are deliberately not in data/eval_queries.json;
 # they measure fallback behaviour on an English corpus, not Chinese quality.
 CHINESE_PROBES: tuple[str, ...] = (
@@ -84,6 +111,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="or",
         help="Plain-query semantics: recall-oriented OR (default) or strict AND",
     )
+    parser.add_argument(
+        "--chunk-strategy",
+        choices=("document", "fixed_window", "structured"),
+        default="document",
+        help="Chunking strategy every retrieval is restricted to",
+    )
     parser.add_argument("--repetitions", type=int, default=5, help="Timed passes per query")
     parser.add_argument("--warmup-passes", type=int, default=1, help="Untimed passes per query")
     parser.add_argument(
@@ -99,6 +132,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Use only the first N eval queries (smoke test; the full report uses 30)",
     )
     parser.add_argument("--dry-run", action="store_true", help="Print environment and exit")
+    parser.add_argument("--no-write", action="store_true", help="Do not write report files")
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace existing report files at the selected paths",
+    )
     parser.add_argument(
         "--docker-timeout",
         type=float,
@@ -175,8 +214,13 @@ def _sha256(path: Path) -> str:
         return "missing"
 
 
-def _read_db_facts() -> dict[str, Any]:
-    """Collect read-only database facts used by the report and the gates."""
+def _read_db_facts(chunk_strategy: str = "document") -> dict[str, Any]:
+    """Collect read-only database facts used by the report and the gates.
+
+    The gate counts are scoped to ``chunk_strategy``: several chunkings may
+    coexist in ``chunks``, and a global count would reject a perfectly valid
+    single-strategy run. Global counts stay in the report as context.
+    """
     settings = get_settings()
     with connection() as conn:
         addr = conn.execute(
@@ -185,6 +229,15 @@ def _read_db_facts() -> dict[str, Any]:
         documents = int(scalar(conn, "SELECT count(*) FROM documents") or 0)
         chunks = int(scalar(conn, "SELECT count(*) FROM chunks") or 0)
         distinct_docs = int(scalar(conn, "SELECT count(DISTINCT doc_id) FROM chunks") or 0)
+        strategy_counts = conn.execute(
+            "SELECT count(*), count(DISTINCT doc_id) FROM chunks WHERE chunk_strategy = %s",
+            (chunk_strategy,),
+        ).fetchone()
+        strategy_chunks, strategy_docs = (
+            (int(strategy_counts[0]), int(strategy_counts[1]))
+            if strategy_counts is not None
+            else (0, 0)
+        )
         strategies = conn.execute(
             "SELECT chunk_strategy, count(*) FROM chunks GROUP BY chunk_strategy "
             "ORDER BY chunk_strategy"
@@ -250,9 +303,12 @@ def _read_db_facts() -> dict[str, Any]:
         "tsv_expression": str(tsv_expression[0]) if tsv_expression else "missing",
         "gin_index": str(gin_index[0]) if gin_index else "missing",
         "chunk_columns": ", ".join(chunk_columns),
+        "chunk_strategy": chunk_strategy,
         "documents": documents,
         "chunks": chunks,
         "distinct_chunk_docs": distinct_docs,
+        "strategy_chunks": strategy_chunks,
+        "strategy_docs": strategy_docs,
         "chunk_strategies": dict(strategies),
         "embedding_dimensions": sorted(dimensions),
         "embedding_model": settings.embedding_model,
@@ -274,19 +330,30 @@ def _gold_missing(queries: Sequence[EvalQuery]) -> list[str]:
     return [doc_id for doc_id in gold if doc_id not in found]
 
 
-def _post_run_counts() -> dict[str, Any]:
-    """Read the row counts again, to prove the benchmark did not write."""
+def _post_run_counts(chunk_strategy: str = "document") -> dict[str, Any]:
+    """Read the row counts again, to prove the benchmark did not write.
+
+    The scoped counts are the ones the gate compares: unrestricted global
+    counts would move whenever an unrelated chunking strategy is written.
+    """
     with connection() as conn:
+        strategy_counts = conn.execute(
+            "SELECT count(*), count(DISTINCT doc_id) FROM chunks WHERE chunk_strategy = %s",
+            (chunk_strategy,),
+        ).fetchone()
         return {
             "documents": int(scalar(conn, "SELECT count(*) FROM documents") or 0),
             "chunks": int(scalar(conn, "SELECT count(*) FROM chunks") or 0),
             "distinct_chunk_docs": int(
                 scalar(conn, "SELECT count(DISTINCT doc_id) FROM chunks") or 0
             ),
+            "strategy_chunks": int(strategy_counts[0]) if strategy_counts else 0,
+            "strategy_docs": int(strategy_counts[1]) if strategy_counts else 0,
             "embedding_dimensions": sorted(
                 int(row[0])
                 for row in conn.execute(
-                    "SELECT DISTINCT vector_dims(embedding) FROM chunks WHERE embedding IS NOT NULL"
+                    "SELECT DISTINCT vector_dims(embedding) FROM chunks "
+                    "WHERE embedding IS NOT NULL"
                 ).fetchall()
             ),
         }
@@ -327,9 +394,12 @@ def _print_environment(env: dict[str, Any], dataset: dict[str, Any]) -> None:
         "fts_config",
         "tsv_expression",
         "gin_index",
+        "chunk_strategy",
         "documents",
         "chunks",
         "distinct_chunk_docs",
+        "strategy_chunks",
+        "strategy_docs",
         "chunk_strategies",
         "embedding_dimensions",
         "english_tsquery_example",
@@ -371,8 +441,7 @@ def _estimate_workload(query_count: int, repetitions: int, warmups: int) -> dict
 
 def _write_blocked(
     message: str,
-    output: Path,
-    report: Path,
+    writer: _ArtifactWriter,
     *,
     environment: dict[str, Any] | None = None,
     dataset: dict[str, Any] | None = None,
@@ -407,9 +476,8 @@ def _write_blocked(
         },
         "issues": [message],
     }
-    write_outputs(payload, output, report)
     print(f"BLOCKED: {message}")
-    print(f"Wrote blocked artifacts to {output} and {report}")
+    writer(payload)
 
 
 def _production_sanity(
@@ -417,9 +485,12 @@ def _production_sanity(
     top_k: int,
     benchmark_keys: Sequence[str],
     query_mode: QueryMode,
+    chunk_strategy: str = "document",
 ) -> dict[str, Any]:
     """Compare the benchmark SQL path with the production ``SparseRetriever``."""
-    retriever = SparseRetriever(SparseConfig(top_n=top_k, query_mode=query_mode))
+    retriever = SparseRetriever(
+        SparseConfig(top_n=top_k, query_mode=query_mode, chunk_strategy=chunk_strategy)
+    )
     hits = retriever.retrieve(query.query)
     production_keys = [f"{hit.chunk_strategy}:{hit.chunk_id}" for hit in hits]
     return {
@@ -430,19 +501,26 @@ def _production_sanity(
     }
 
 
-def _english_fts_match_count(query: str) -> int:
+def _english_fts_match_count(query: str, chunk_strategy: str = "document") -> int:
     """Count chunks matched by the English FTS parser for one probe."""
     with connection() as conn:
         row = conn.execute(
-            "SELECT count(*) FROM chunks WHERE tsv @@ websearch_to_tsquery('english', %s)",
-            (query,),
+            "SELECT count(*) FROM chunks "
+            "WHERE tsv @@ websearch_to_tsquery('english', %s) AND chunk_strategy = %s",
+            (query, chunk_strategy),
         ).fetchone()
         return int(row[0]) if row else 0
 
 
-def _chinese_probe(top_k: int, query_mode: QueryMode = "or") -> dict[str, Any]:
+def _chinese_probe(
+    top_k: int,
+    query_mode: QueryMode = "or",
+    chunk_strategy: str = "document",
+) -> dict[str, Any]:
     """Run synthetic Chinese probes and record honest, separate results."""
-    retriever = SparseRetriever(SparseConfig(top_n=top_k, query_mode=query_mode))
+    retriever = SparseRetriever(
+        SparseConfig(top_n=top_k, query_mode=query_mode, chunk_strategy=chunk_strategy)
+    )
     records: list[dict[str, Any]] = []
     for query in CHINESE_PROBES:
         cjk_terms = _cjk_bigrams(query)
@@ -490,7 +568,12 @@ def _chinese_probe(top_k: int, query_mode: QueryMode = "or") -> dict[str, Any]:
             "English; zero results do not demonstrate Chinese retrieval quality."
         ),
         "probes": [
-            {**record, "english_fts_match_count": _english_fts_match_count(record["query"])}
+            {
+                **record,
+                "english_fts_match_count": _english_fts_match_count(
+                    record["query"], chunk_strategy
+                ),
+            }
             for record in records
         ],
         "lexeme_evidence": {
@@ -533,6 +616,19 @@ def main(argv: list[str] | None = None) -> int:
         print("BLOCKED: --limit must be positive")
         return 2
 
+    writer = _ArtifactWriter(
+        args.output,
+        args.report,
+        overwrite=args.overwrite,
+        enabled=not args.no_write,
+    )
+    if not args.no_write and not args.dry_run:
+        try:
+            ensure_writable((args.output, args.report), overwrite=args.overwrite)
+        except ArtifactExistsError as exc:
+            print(f"BLOCKED: {exc}")
+            return 2
+
     try:
         config = build_config(
             args.top_k,
@@ -540,13 +636,14 @@ def main(argv: list[str] | None = None) -> int:
             args.warmup_passes,
             args.statement_timeout_ms,
             args.query_mode,
+            args.chunk_strategy,
         )
     except BenchmarkError as exc:
         print(f"BLOCKED: {exc}")
         return 2
 
     try:
-        env = _read_db_facts()
+        env = _read_db_facts(args.chunk_strategy)
         env.update(
             {
                 "python_version": platform.python_version(),
@@ -559,28 +656,28 @@ def main(argv: list[str] | None = None) -> int:
         )
     except (psycopg.Error, ConnectionError) as exc:
         message = f"PostgreSQL is not reachable; benchmark not started: {exc}"
-        _write_blocked(message, args.output, args.report)
+        _write_blocked(message, writer)
         return 2
 
     try:
         source_report = inspect_source()
     except Exception as exc:  # noqa: BLE001 -- surface the corpus problem as a gate
         message = f"knowledge base is not usable; benchmark not started: {exc}"
-        _write_blocked(message, args.output, args.report, environment=env)
+        _write_blocked(message, writer, environment=env)
         return 2
     if not source_report.ok:
         message = (
             f"knowledge base has {len(source_report.problems)} invalid record(s); "
             "benchmark not started"
         )
-        _write_blocked(message, args.output, args.report, environment=env)
+        _write_blocked(message, writer, environment=env)
         return 2
 
     try:
         all_queries = load_eval_queries(QUERY_PATH)
     except BenchmarkError as exc:
         message = f"eval queries are not usable; benchmark not started: {exc}"
-        _write_blocked(message, args.output, args.report, environment=env)
+        _write_blocked(message, writer, environment=env)
         return 2
 
     missing_gold = _gold_missing(all_queries)
@@ -590,7 +687,7 @@ def main(argv: list[str] | None = None) -> int:
             f"{', '.join(missing_gold[:10])}"
         )
         data = _dataset_metadata(all_queries, len(all_queries), args.limit, missing_gold)
-        _write_blocked(message, args.output, args.report, environment=env, dataset=data)
+        _write_blocked(message, writer, environment=env, dataset=data)
         return 2
 
     expected_documents = get_settings().expected_document_count
@@ -603,14 +700,24 @@ def main(argv: list[str] | None = None) -> int:
         gate_problems.append(
             f"database documents={env['documents']}, expected {expected_documents}"
         )
-    if env["chunks"] != expected_documents:
-        gate_problems.append(f"database chunks={env['chunks']}, expected {expected_documents}")
-    if env["distinct_chunk_docs"] != expected_documents:
+    if env["strategy_chunks"] < expected_documents:
         gate_problems.append(
-            f"distinct chunk doc_ids={env['distinct_chunk_docs']}, expected {expected_documents}"
+            f"chunks for strategy {env['chunk_strategy']!r}={env['strategy_chunks']}, "
+            f"expected at least {expected_documents}"
+        )
+    if config.chunk_strategy == "document" and env["strategy_chunks"] != expected_documents:
+        gate_problems.append(
+            f"document-strategy chunks={env['strategy_chunks']}, expected {expected_documents}"
+        )
+    if env["strategy_docs"] != expected_documents:
+        gate_problems.append(
+            f"distinct chunk doc_ids for strategy {env['chunk_strategy']!r}="
+            f"{env['strategy_docs']}, expected {expected_documents}"
         )
     if env["embedding_dimensions"] != [get_settings().embedding_dim]:
-        gate_problems.append(f"embedding dimensions={env['embedding_dimensions']}, expected [1024]")
+        gate_problems.append(
+            f"embedding dimensions={env['embedding_dimensions']}, expected [1024]"
+        )
     if env["vector_version"] == "missing":
         gate_problems.append("pgvector extension is missing")
     if env["fts_config"] == "missing":
@@ -622,7 +729,7 @@ def main(argv: list[str] | None = None) -> int:
     if gate_problems:
         message = "environment gate failed: " + "; ".join(gate_problems)
         data = _dataset_metadata(all_queries, len(all_queries), args.limit, missing_gold)
-        _write_blocked(message, args.output, args.report, environment=env, dataset=data)
+        _write_blocked(message, writer, environment=env, dataset=data)
         return 2
 
     selected = list(all_queries[: args.limit] if args.limit else all_queries)
@@ -645,7 +752,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     except BenchmarkError as exc:
         message = f"benchmark could not complete: {exc}"
-        _write_blocked(message, args.output, args.report, environment=env, dataset=dataset)
+        _write_blocked(message, writer, environment=env, dataset=dataset)
         return 2
 
     sanity_record = next(
@@ -659,12 +766,18 @@ def main(argv: list[str] | None = None) -> int:
     first_query = next(query for query in selected if query.query_id == sanity_record["query_id"])
     benchmark_keys = sanity_record.get("keys", [])
     try:
-        sanity = _production_sanity(first_query, config.top_k, benchmark_keys, config.query_mode)
+        sanity = _production_sanity(
+            first_query,
+            config.top_k,
+            benchmark_keys,
+            config.query_mode,
+            config.chunk_strategy,
+        )
     except (psycopg.Error, ConnectionError, RetrievalError) as exc:
         sanity = {"query_id": first_query.query_id, "error": str(exc), "match": None}
 
     try:
-        probe = _chinese_probe(config.top_k, config.query_mode)
+        probe = _chinese_probe(config.top_k, config.query_mode, config.chunk_strategy)
     except (psycopg.Error, ConnectionError) as exc:
         probe = {"available": False, "reason": f"probe failed: {exc}"}
 
@@ -675,6 +788,7 @@ def main(argv: list[str] | None = None) -> int:
             0,
             config.statement_timeout_ms,
             "and",
+            config.chunk_strategy,
         )
         control = run_sparse_benchmark(selected, control_config)
         result["and_mode_control"] = {
@@ -702,7 +816,7 @@ def main(argv: list[str] | None = None) -> int:
         result["retrieval"]["per_query"], selected, args.dense_artifact, config.top_k
     )
 
-    post = _post_run_counts()
+    post = _post_run_counts(args.chunk_strategy)
     hashes_after = {
         "kb_documents.json": _sha256(KB_PATH),
         "eval_queries.json": _sha256(QUERY_PATH),
@@ -712,7 +826,8 @@ def main(argv: list[str] | None = None) -> int:
     dataset["data_integrity_ok"] = (
         post["documents"] == env["documents"]
         and post["chunks"] == env["chunks"]
-        and post["distinct_chunk_docs"] == env["distinct_chunk_docs"]
+        and post["strategy_chunks"] == env["strategy_chunks"]
+        and post["strategy_docs"] == env["strategy_docs"]
         and post["embedding_dimensions"] == env["embedding_dimensions"]
         and hashes_after == dataset["hashes"]
     )
@@ -754,9 +869,8 @@ def main(argv: list[str] | None = None) -> int:
     result["issues"] = issues
     result["status"] = "PASS" if not issues else "ISSUES"
 
-    write_outputs(attach_query_reference(result, selected), args.output, args.report)
     _print_summary(result)
-    print(f"Wrote {args.output} and {args.report}")
+    writer(attach_query_reference(result, selected))
     return 0 if not issues else 1
 
 

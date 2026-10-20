@@ -4,12 +4,29 @@
 - 源报告生成日期：2026-10-17（Dense / Sparse / Hybrid / Rerank / RAG）
 - 汇总性质：**只读汇总现有报告**；本汇总没有重新运行 Benchmark、pytest、RAG、
   Embedding、Reranker 或真实 LLM，也没有修改任何历史报告、JSON、数据或 gold label。
-- 总体状态：Dense / Sparse / Hybrid / Rerank 的报告状态为 **PASS**；RAG 的报告状态为
-  **PARTIAL**（mock Provider + historical 重放，真实 LLM 未运行）。
+- 总体状态：Dense / Sparse / Hybrid / Rerank 的报告状态为 **PASS**；RAG 的正式报告
+  状态为 **PARTIAL**（mock Provider + historical 重放，正式报告未调用真实 LLM）；
+  另有独立的真实 RAG + Judge 全量结果（`reports/judge/`，PASS，30/30），见 §3.5。
+- 后续代码变更（2026-10-20，P0）：检索层新增 `chunk_strategy` 作用域，历史 RRF 重放
+  会校验 artifact 与命中的策略；索引管理新增 shadow 建索引 API。这些变更没有重跑
+  Benchmark，也没有改写任何历史报告；本汇总中的数字仍只属于原始报告的运行环境。
+- 后续代码变更（2026-10-20，P0+P1+P2）：新增统一评测/报告层、索引与分块实验、
+  RRF 敏感性与 FastAPI。随后已在**容器内真实执行**统一检索、索引、分块、RRF 敏感性、
+  Top-20 → Top-5 精排与最终报告生成，产物为 `reports/unified/*.json`、
+  `reports/final_report.md` 与 `reports/figures/*.png`。加入 Judge 后报告已按
+  30/30 全量结果重生成，`Report status: PASS`，图共 5 张。本汇总新增 §8 记录这些
+  容器结果；五份历史报告仍保持只读。
+- 后续新增（2026-10-20，Judge）：LLM-as-a-Judge 模块完成宿主 Ruff / mypy / 定向与
+  全量测试，以及容器 mock 闭环（`reports/judge-smoke/`）和**真实 30/30 全量运行**
+  （`reports/judge/`，PASS）。真实结果：Context Relevance mean 3.9667、
+  Faithfulness mean 5.0000、0 失败、0 NOT RUN、`same_model=true`。历史 3/30 真实
+  smoke 归档在 `reports/judge-real-3q/`；人工校准与 inter-judge 一致性仍为
+  **NOT RUN**，见 §3.5 与 `README.md` 的“LLM-as-a-Judge 自动评估”一节。
 
 > 本文是跨报告索引与摘要，不替代原始报告。每个数字均来自下方的原始报告或数据文件；
 > 如果汇总与原始报告冲突，以原始报告为准。复核时必须按原始报告记录的环境、数据和
 > 命令执行，不能把本汇总当作一次新的实测。
+> 题目评分维度、加分项与提交物对照见 `README.md` 的“技术评估要求对照（题目 PDF）”。
 
 ---
 
@@ -40,7 +57,7 @@ PostgreSQL 16.14 + pgvector 0.8.2 运行在容器中；Dense / Sparse / Hybrid /
 |---|---|---|
 | 文档数 | 150 | Dense / Sparse / Hybrid / Rerank / RAG 报告 |
 | chunk 数 | 150 | 同上 |
-| 分块策略 | `document`（1 篇文档 = 1 个 chunk） | `docs/roadmap.md` §1；`src/ingestion/chunker.py` |
+| 分块策略（本汇总的历史 Benchmark） | `document`（1 篇文档 = 1 个 chunk） | `docs/roadmap.md` §1；`src/ingestion/chunker.py` |
 | 评测 Query | 30 条英文 Query | 五份报告 |
 | gold 引用总数 | 43 条 | `docs/roadmap.md` §2 的只读统计（`data/eval_queries.json`） |
 | 不同 gold 文档数 | 38 篇 | `hybrid_benchmark.json` 的 `dataset.distinct_gold_docs`；`docs/roadmap.md` §2 |
@@ -53,7 +70,9 @@ PostgreSQL 16.14 + pgvector 0.8.2 运行在容器中；Dense / Sparse / Hybrid /
 > 文档”。这不改变 Sparse OR Recall 1.000 的结论。历史报告未修改。
 
 **标注限制**：gold label 不是穷尽相关性标注。非 gold 位置不能视为 true negative，
-因此 `Precision@K` 与 `nDCG@K` 未计算；现有 Recall / MRR / Hit@1 也不能替代生成质量。
+因此 `Precision@K` 与二元 `nDCG@K` 只能作为补充指标；本汇总引用的历史报告未包含
+这些字段（当前代码已实现并有单元测试，但不改写历史结果）。现有 Recall / MRR /
+Hit@1 也不能替代生成质量。
 
 ---
 
@@ -117,6 +136,20 @@ PostgreSQL 16.14 + pgvector 0.8.2 运行在容器中；Dense / Sparse / Hybrid /
 来源：[`rerank_benchmark.md`](rerank_benchmark.md) / [`rerank_benchmark.json`](rerank_benchmark.json)。
 重排前后数字见 §5.2。
 
+**题面参数复跑（容器，2026-10-20）**：为对齐题目要求的 Top-K 20 → 5，另跑了一次
+实时统一评测 `reports/unified/rerank_20to5.json`（30/30，`candidate_k=20`、
+`top_k=5`、RRF k=60、`document` 策略）。两个臂在同一候选池上实时执行：
+
+| 臂 | Recall macro | Recall micro | nDCG@5 | MRR | Hit@1 | P50 / P95 / P99 ms |
+|---|---:|---:|---:|---:|---:|---:|
+| `rrf`（20 → 5） | 0.9556 | 0.9070 | 0.9204 | 0.9500 | 27/30 | 89.46 / 109.55 / 112.87 |
+| `rrf_rerank`（20 → 5） | 1.0000 | 1.0000 | 0.9777 | 0.9833 | 29/30 | 1790.92 / 2038.51 / 4683.37 |
+
+这是**实时检索 + 实时重排**，不是历史重放；候选池缩小到 5 后，`rrf` 在 Q 上的
+Recall 从 1.000（K=10）降到 0.9556，而 Cross-Encoder 在同一 20 条候选池上把
+Recall 拉回 1.0000，并提升 MRR/nDCG。代价是 P50 从约 89 ms 升到约 1791 ms（CPU）。
+它不改变 §3.4 历史报告的 10 → 10 口径，两者分开记录。
+
 ### 3.5 RAG（阶段 ⑧）
 
 - **Status: PARTIAL**。Provider 是确定性 **mock**，答案以 `MOCK` 开头；正式报告
@@ -127,8 +160,12 @@ PostgreSQL 16.14 + pgvector 0.8.2 运行在容器中；Dense / Sparse / Hybrid /
   证据 Recall macro / micro = 1.0000 / 1.0000；证据 MRR = 0.9833；上下文截断 Query 数 0。
 - total P50/P95 = 970.8791 / 1082.2045 ms；retrieval P50/P95 = 970.0994 / 1081.4004 ms；
   LLM mock P50/P95 = 0.0675 / 0.0904 ms；n=30，单进程，未剔除首次模型加载。
-- **未计算**：answer correctness、Faithfulness、Answer Relevance。数据集只有
-  `gold_response` 参考文本，没有评分 rubric、人工评分或已执行的 LLM-as-a-Judge。
+- **本报告未计算**：answer correctness、Answer Relevance；Context Relevance /
+  Faithfulness 由独立 Judge 模块评估。真实 30/30 全量已执行（`reports/judge/`，
+  PASS）：Context Relevance mean 3.9667、Faithfulness mean 5.0000、0 失败、
+  `same_model=true`；另有独立 mock 闭环 `reports/judge-smoke/` 与历史 3/30 smoke
+  `reports/judge-real-3q/`。人工校准与 inter-judge 一致性仍为 **NOT RUN**；
+  Judge 分数不并入本节历史数字。
   证据 Recall/MRR 是检索指标，不是生成准确率。
 - 单条 Query 的 total 最大值为 Q-001 的 24,025.2685 ms，包含首次懒加载；因此
   P50/P95 不是稳态延迟。
@@ -211,34 +248,63 @@ PostgreSQL 16.14 + pgvector 0.8.2 运行在容器中；Dense / Sparse / Hybrid /
 | 引用有效率 | 1.0000 (30/30) | 有效 `E<n>` / 全部返回标签 |
 | 证据 Recall macro / micro | 1.0000 / 1.0000 | 最终证据集合；检索指标 |
 | 证据 MRR | 0.9833 | 最终证据集合；检索指标 |
-| answer correctness / Faithfulness / Answer Relevance | **未计算** | 无 rubric、人工评分或已执行 Judge |
+| answer correctness / Answer Relevance | **未计算** | 无 rubric、人工评分或实现 |
+| Context Relevance / Faithfulness | 由 Judge 模块单独评估 | 真实 30/30 全量（PASS）：CR mean 3.9667、Faithfulness mean 5.0000、`same_model=true`；人工校准与 inter-judge 一致性为 **NOT RUN**；不并入本表 |
 
 > RAG 的 1.0000 证据 Recall 与 0.9833 证据 MRR **不是**答案正确率。mock 答案不能
-> 用于评价真实 LLM 的生成质量；真实 LLM 评测未运行。
+> 用于评价真实 LLM 的生成质量；另有 Judge 30/30 全量真实运行（见 §3.5），
+> 不属于本节的 ⑧ 数字。
 
 ---
 
 ## 6. 已知限制、口径差异与未验证项
 
-1. **规模有限**：只有 150 documents / 150 chunks。Dense 的自然计划是 `Seq Scan`，
-   HNSW 没有可观察延迟优势；这些结果不能外推到 10 万、100 万或 1000 万级数据。
-2. **分块单一**：当前只有 `document` 策略（1 篇文档 = 1 个 chunk）；`fixed_window` /
-   `contextual` 未实现、未评测，因此没有分块策略对比结论。
+1. **规模有限**：只有 150 documents；`document` 策略为 150 chunks，三种分块合计
+   578 chunks。Dense 的自然计划是 `Seq Scan`，HNSW 没有可观察延迟优势；这些结果
+   不能外推到 10 万、100 万或 1000 万级数据。
+2. **分块对比已运行（容器，2026-10-20）**：`document`、`fixed_window`、`structured`
+   分别入库 150 / 267 / 161 chunks，同一 30 条 Query 上运行
+   `dense` / `sparse_or` / `rrf`，另有独立 artifact 增加 `rrf_rerank`。证据：
+   `reports/unified/chunking_benchmark.json`（PASS）与
+   `reports/unified/chunking_benchmark_rerank.json`（PASS）。
+   **没有单一策略在所有指标上胜出**：`fixed_window` 的 dense Recall 最高
+   （0.9889），`structured` 的 `sparse_or` MRR 最高（0.9733）；`document` 的
+   `rrf_rerank` MRR 最高（0.9833）。rerank 对三种策略的 MRR/nDCG 都有提升
+   （如 `structured` MRR 0.8778 → 0.9500），但 P50 延迟从约 82–97 ms 升到
+   512–793 ms，且所有策略共用一个 HNSW 索引，索引大小无法按策略归因。
+   另外 `chunk_strategy` 过滤发生在 ANN 扫描之后：`ef_search` 较小时某策略可能
+   返回少于 K 条，策略间召回差异因此部分来自其在全局索引中的占比。
+   这些是文档级检索指标，不是答案质量。历史 Benchmark 仍只使用 `document`。
 3. **语言有限**：30 条 Query 是英文；中文探针 5 条均为 0 命中；CJK fallback 是两字符
    子串匹配，不是分词。中文/混合语言的检索、重排、生成与引用均未验证。
-4. **指标不完整**：labels 非穷尽，`Precision@K` 与 `nDCG@K` 未计算；
-   `Recall@K` / MRR / Hit@1 是检索指标，不能代表答案正确性。
+4. **指标口径**：labels 非穷尽；`Precision@K` 与二元 `nDCG@K` 已在代码中实现
+   并有单元测试，但历史报告未包含，只能作为补充指标。`Recall@K` / MRR / Hit@1
+   是检索指标，不能代表答案正确性。
 5. **RAG 是 mock + historical**：Provider 为 mock，答案以 `MOCK` 开头；Dense/Sparse/RRF
-   未在 ⑧ 重新执行；证据指标衡量被重放的候选池。**真实 LLM 未调用**，生成质量未验证。
+   未在 ⑧ 重新执行；证据指标衡量被重放的候选池。**⑧ 未调用真实 LLM**；独立的
+   Judge 30/30 全量运行见 §3.5，不能改变本报告的 mock 结论。
 6. **Reranker 基线是历史重放**：四个基线臂来自 ⑥-B；重排臂使用历史 RRF Top-10 身份，
    文本实时读取、重排实时执行。候选池相同，Recall 不会因重排上升。
 7. **未同进程加载 Embedding + Reranker**：⑦-B 没有测量二者共存的内存行为；RAG live
    链路曾在同进程 reranker 加载阶段触发原生段错误（exit 139），历史
    `0xC0000005` / `torch_cpu.dll` 根因未确认。E-5B（多候选）未执行。
-8. **完整 pytest 未重跑**：只运行了模块级测试；不能声称完整测试套件通过。依赖版本
-   与 `pyproject.toml` 的精确 pin 存在漂移；没有锁文件；`psutil` 未声明。
-9. **Docker 全链路未验证**：只验证了数据库侧；容器内 ingest、五个 Benchmark、RAG、
-   模型缓存与离线加载均未验证。宿主结果不能当作容器结果。
+8. **完整 pytest 状态**：容器内全量套件已真实执行；加入 Judge 测试后为
+   `691 passed, 1 skipped`（JUnit `reports/container/pytest-full-judge.xml`），
+   旧记录为 `664 passed, 1 skipped`（`reports/container/pytest-full.log`）。
+   宿主定向 Judge 测试为 36 tests / 3 skipped（缺 `matplotlib`）。依赖版本与
+   `pyproject.toml` 的精确 pin 仍存在漂移，没有覆盖传递依赖的锁文件。
+   `chunk_strategy` 过滤与索引管理已有真实数据库/运行证据（见 §8）。
+9. **Docker 全链路仍非完整**：数据库侧、三策略 ingest、统一检索、索引、分块、
+   RRF 敏感性、Top-20 → Top-5 精排、模型离线加载与报告/图均已在容器内运行；
+   真实 RAG + Judge 30/30 全量也已执行；FastAPI `api` 服务已启动，`/healthz` 与
+   `/acceptance/api/summary` 已验证（浏览器渲染、`/readyz` 与 `/answer` 未验证）。
+   题目 Bonus C 的 `POST /api/v1/search` 与 Swagger 已实现并在容器内实际请求：
+   `api` 容器 healthy，检索接口返回 200、5 条结果，`/docs` 返回 200，
+   `/openapi.json` 含 `/api/v1/search`。重启 `api` 后按最终文件复跑，两个请求仍为
+   200。首次请求包含 embedding/reranker 加载（约 15–19 s），不是稳态延迟。
+   Ruff / mypy / `tests/test_api.py`（23 个用例）均已通过。详见
+   `docs/roadmap.md` §10.8。五个历史 Benchmark 与 RAG 的原始数字仍来自宿主，
+   不能当作容器结果。
 10. **延迟口径**：所有延迟都是单进程、顺序、宿主机运行，不含并发、GPU 或跨机器；
     RAG 的 total P50/P95 包含首条 Query 的懒加载（Q-001 = 24,025.2685 ms），不是稳态值。
 11. **Hybrid 报告措辞**：报告限制段写“all 43 gold documents”，实际为 43 条 gold 引用 /
@@ -246,6 +312,20 @@ PostgreSQL 16.14 + pgvector 0.8.2 运行在容器中；Dense / Sparse / Hybrid /
 12. **报告状态不等于生产可用**：Dense/Sparse/Hybrid/Rerank 的 PASS 是针对各自报告
     口径的评测状态；RAG 仍是 PARTIAL。没有任何报告支持“生产级”“高可用”“大规模”
     或“完整生成质量”结论。
+13. **索引管理已执行（两轮）**：容器内已执行 shadow HNSW/IVFFlat 建索引、查询与清理。
+    `reports/unified/index_benchmark.json`（`synthetic_scale=1`）因
+    `m=32, ef_construction=32` 违反 pgvector 的 `ef_construction >= 2*m` 而 PARTIAL；
+    随后用合法网格与 `synthetic_scale=10`（1500 行）重跑，得到 PASS 的
+    `reports/unified/index_benchmark_scale10.json`。合成向量只反映索引行为，
+    不进入语义质量结论；旧 PARTIAL artifact 保留，未被覆盖。
+14. **Judge 已完成 30/30 真实全量**：Context Relevance mean 3.9667（2×1、3×4、
+    4×20、5×5；低分 1 条 Q-029）、Faithfulness mean 5.0000（5×30），
+    `same_model=true`（同模型自评），无人工校准或 inter-judge 一致性；0 失败、
+    0 NOT RUN，但不能替代人工质量结论。配置模型字段为 `deepseek-chat`，但响应
+    `model` 均为 `deepseek-flash`（同一 endpoint，报告中的模型名应理解为配置名）。
+    另外 Q-001 的 Context Relevance 为 4 分，却把 10 条 context 中的 9 条标为
+    irrelevant，说明 rubric 执行可能不一致；分数不是客观真值。历史 3/30 smoke
+    归档在 `reports/judge-real-3q/`。
 
 ---
 
@@ -263,7 +343,8 @@ PostgreSQL 16.14 + pgvector 0.8.2 运行在容器中；Dense / Sparse / Hybrid /
 
 1. 先读对应 `.json` 的运行元数据（环境、参数、数据哈希、逐查询结果），再读 `.md` 摘要；
    不要只看汇总数字。
-2. 按源报告记录的命令、数据与依赖环境执行；本汇总没有重新执行任何命令。
+2. 按源报告记录的命令、数据与依赖环境执行；本汇总没有重跑五份历史报告。§8 的
+   容器 artifact 是另一次独立运行，只按自己的 `.json` 复核。
 3. 报告重新生成会改变耗时、时间戳与哈希；不要覆盖历史报告。报告哈希见
    [`README.md`](../README.md) 的“验收证据哈希”一节。
 4. 如果代码、数据、gold label、模型或依赖发生变化，应先更新对应报告和 README 阶段表，
@@ -271,3 +352,24 @@ PostgreSQL 16.14 + pgvector 0.8.2 运行在容器中；Dense / Sparse / Hybrid /
 
 **报告文件哈希**：见 [`README.md`](../README.md) 的“验收证据哈希”一节。该哈希只在
 报告内容不变时有意义；重新运行 Benchmark 会改变耗时等字段，从而改变哈希。
+
+---
+
+## 8. 本轮容器内新增 artifact（2026-10-20）
+
+| Artifact | Status | 口径 | 关键数字 |
+|---|---|---|---|
+| [`unified/benchmark.json`](unified/benchmark.json) / `.md` | PASS | 30 queries；`top_k=10`、`candidate_k=10`、RRF k=60；6 arms；容器 | dense 0.9444/0.9167/25；sparse_or 1.0000/0.9400/27；sparse_and 0.1333/0.1333/4；union 1.0000/0.9167/25；rrf 1.0000/0.9500/27；rrf_rerank 1.0000/0.9833/29（Recall/MRR/Hit@1） |
+| [`unified/rerank_20to5.json`](unified/rerank_20to5.json) / `.md` | PASS | 30 queries；**candidate pool 20 → final Top-5**；实时检索 + 实时重排；容器 | rrf 0.9556/0.9500/27；rrf_rerank 1.0000/0.9833/29；nDCG@5 0.9204 → 0.9777；P50 89.46 → 1790.92 ms |
+| [`unified/chunking_benchmark.json`](unified/chunking_benchmark.json) / `.md` | PASS | 3 策略 × 3 arms × 30 queries；578 chunks；容器 | 详见 `final_report.md` §5 |
+| [`unified/chunking_benchmark_rerank.json`](unified/chunking_benchmark_rerank.json) / `.md` | PASS | 3 策略 × 4 arms（含 `rrf_rerank`）× 30 queries；容器 | `document` 的 `rrf_rerank` MRR 0.9833 最高 |
+| [`unified/fusion_sensitivity.json`](unified/fusion_sensitivity.json) / `.md` | PASS | RRF k / candidate_k 网格；容器 | 6 个网格单元 |
+| [`unified/index_benchmark_scale10.json`](unified/index_benchmark_scale10.json) / `.md` | PASS（合成） | `synthetic_scale=10`（1500 行）；6 组 HNSW + 5 组 IVFFlat；容器 | 只反映索引行为：HNSW 多数 ANN Recall 1.000，`m=32/efc=64` 在 `ef_search=10` 为 0.797；IVFFlat `lists=16/probes=1` 为 0.733 |
+| [`unified/index_benchmark.json`](unified/index_benchmark.json) / `.md` | PARTIAL（保留） | `synthetic_scale=1`；14 组中 1 组因非法参数失败 | 不作为调参结论 |
+| [`judge-smoke/`](judge-smoke/judge_summary.json) / `.md` | PARTIAL（**MOCK fixture**） | 3/30；mock RAG + mock judge；只验证接线、解析、失败隔离与聚合 | 两指标各 3/3、mean/median 4.0；**不是模型判断**；真实结果见下一行 |
+| [`judge/`](judge/judge_summary.json) / `.md` | PASS（**真实**） | 真实 RAG + 真实 Judge，30/30 全量；同模型自评；另含 JSONL 30 行 | CR mean 3.9667（2×1、3×4、4×20、5×5）；Faithfulness mean 5.0000（5×30）；0 失败、0 NOT RUN；`judge_is_real=true`、`real_judge_calls=true` |
+| [`judge-real-3q/`](judge-real-3q/judge_summary.json) | PARTIAL（**真实，历史归档**） | 真实 RAG + 真实 Judge，3/30 smoke；同模型自评；JSONL 3 行 | CR mean 4.3333（4×2、5×1）；Faithfulness mean 5.0000（5×3）；0 失败、27 NOT RUN |
+| [`final_report.md`](final_report.md) + [`figures/`](figures/) | PASS | 由 benchmark / index_scale10 / chunking_rerank 渲染，另含 rerank 20→5 与 30/30 Judge 章节 | 每个表格带 artifact 路径与 SHA256；5 张 PNG（含 `judge_distribution.png`）；`Report status: PASS` |
+
+> 这些数字来自容器内独立运行，与 §1–§6 的五份历史报告（宿主 Python）不是同一环境，
+> 不能互相替代。索引实验的合成规模只用于观察索引行为，不进入语义质量结论。

@@ -220,6 +220,36 @@ def test_duplicate_query_text_is_rejected(tmp_path: Path) -> None:
         HistoricalRRFRetriever(path, connection_factory=_factory([], []))
 
 
+def test_artifact_from_another_chunk_scope_is_rejected(tmp_path: Path) -> None:
+    """A replay must match the retrieval scope it will be reported under."""
+    path = tmp_path / "scoped.json"
+    path.write_text(
+        json.dumps(
+            {
+                "parameters": {"chunk_strategy": "fixed_window"},
+                "per_query": [
+                    {"query": QUERY, "arms": {"rrf": {"hits": []}}}
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="chunk_strategy"):
+        HistoricalRRFRetriever(
+            path, chunk_strategy="document", connection_factory=_factory([], [])
+        )
+
+
+def test_hit_from_another_chunk_scope_is_rejected(tmp_path: Path) -> None:
+    """A mixed-scope pool would silently contaminate the replay."""
+    path = _artifact(
+        tmp_path,
+        rows=[{"chunk_id": "c1", "chunk_strategy": "fixed_window"}],
+    )
+    with pytest.raises(ValueError, match="chunk_strategy"):
+        HistoricalRRFRetriever(path, connection_factory=_factory([], []))
+
+
 def test_default_artifact_is_readable_without_database_access() -> None:
     """The accepted artifact still contains the 30 replayable queries."""
     from src.rag.historical import DEFAULT_HISTORICAL

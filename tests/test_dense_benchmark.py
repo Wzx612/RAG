@@ -17,6 +17,7 @@ from typing import Any
 import psycopg
 import pytest
 from pgvector import Vector
+from src.evaluation.artifacts import ArtifactExistsError
 from src.evaluation.dense_benchmark import (
     BenchmarkConfig,
     BenchmarkError,
@@ -135,7 +136,8 @@ def test_run_rejects_mismatched_top_k_before_touching_the_database() -> None:
 def stored_vector(conn: psycopg.Connection) -> list[float]:
     """One real 1024-dim chunk vector, used as a deterministic query."""
     row = conn.execute(
-        "SELECT embedding FROM chunks ORDER BY chunk_strategy, chunk_id LIMIT 1"
+        "SELECT embedding FROM chunks WHERE chunk_strategy = 'document' "
+        "ORDER BY chunk_id LIMIT 1"
     ).fetchone()
     assert row is not None
     value = row[0]
@@ -146,7 +148,9 @@ def test_real_db_smoke_run_verifies_plans_guc_and_metrics(
     conn: psycopg.Connection, stored_vector: list[float]
 ) -> None:
     """One query through exact, natural and two HNSW arms, with real SQL."""
-    count_row = conn.execute("SELECT count(*) FROM chunks").fetchone()
+    count_row = conn.execute(
+        "SELECT count(*) FROM chunks WHERE chunk_strategy = 'document'"
+    ).fetchone()
     assert count_row is not None
     assert count_row[0] == 150
     queries = [query for query in load_eval_queries(DATA) if query.query_id == "Q-001"]
@@ -192,8 +196,11 @@ def test_real_db_smoke_run_verifies_plans_guc_and_metrics(
         assert arm["ef_mismatch_samples"] == 0
         assert arm["quality"]["evaluated_queries"] == 1
         record = arm["per_query"][0]
-        assert record["result_count"] == 5
-        assert record["unique_count"] == 5
+        # The strategy filter runs after the ANN scan: with ef_search=5 and three
+        # strategies sharing one HNSW index, fewer than 5 of the global top-5 can
+        # belong to 'document'. Top-K is an upper bound here, not a guarantee.
+        assert 1 <= record["result_count"] <= 5
+        assert record["unique_count"] == record["result_count"]
         assert 0.0 <= record["recall_vs_exact"] <= 1.0
         assert record["query_ms"] > 0.0
         assert record["db_ms"] >= record["query_ms"]
@@ -231,3 +238,26 @@ def test_write_outputs_creates_json_and_markdown(tmp_path: Path) -> None:
     write_outputs(result, json_path, report_path)
     assert json.loads(json_path.read_text(encoding="utf-8"))["status"] == "PASS"
     assert "Dense Retrieval Benchmark" in report_path.read_text(encoding="utf-8")
+
+
+def test_write_outputs_refuses_to_clobber_a_historical_report(tmp_path: Path) -> None:
+    """A default re-run cannot replace an existing artifact."""
+    result = {
+        "generated_at": "2026-10-17T00:00:00+00:00",
+        "status": "PASS",
+        "environment": {},
+        "dataset": {},
+        "parameters": {"queries": 0, "top_k": 10, "repetitions": 0},
+        "configs": [],
+        "totals": {"errors": 0, "timeouts": 0, "skipped": 0, "invalid_configs": 0},
+    }
+    json_path = tmp_path / "raw.json"
+    report_path = tmp_path / "report.md"
+    write_outputs(result, json_path, report_path)
+    before = json_path.read_text(encoding="utf-8")
+
+    with pytest.raises(ArtifactExistsError, match="refusing to overwrite"):
+        write_outputs(result, json_path, report_path)
+
+    assert json_path.read_text(encoding="utf-8") == before
+    write_outputs(result, json_path, report_path, overwrite=True)

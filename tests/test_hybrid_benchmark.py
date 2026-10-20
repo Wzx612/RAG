@@ -264,6 +264,57 @@ def test_measure_deduplicates_repeated_doc_ids_before_the_cutoff() -> None:
     assert record["ndcg_at_k"] == pytest.approx(0.6309297535714574)
 
 
+def test_reciprocal_rank_is_zero_when_first_gold_is_beyond_the_cutoff() -> None:
+    """A gold document below Top-K is reported by rank but earns no MRR credit."""
+    query = EvalQuery(query_id="Q-LATE", query="late", relevant_doc_ids=("DOC-C",))
+    hits = [
+        _hit("C1", source="dense", rank=1, doc_id="DOC-A"),
+        _hit("C2", source="dense", rank=2, doc_id="DOC-B"),
+        _hit("C3", source="dense", rank=3, doc_id="DOC-C"),
+    ]
+    record = _measure(query, hits, top_k=2)
+
+    assert record["doc_ids"] == ["DOC-A", "DOC-B"]
+    assert record["gold_ranks"] == {"DOC-C": 3}
+    assert record["first_gold_rank"] == 3
+    assert record["reciprocal_rank"] == 0.0
+    assert record["semantic_recall"] == 0.0
+    assert record["precision_at_k"] == 0.0
+    assert record["ndcg_at_k"] == 0.0
+
+
+def test_reciprocal_rank_is_zero_when_no_gold_is_returned() -> None:
+    """No gold hit has a defined zero MRR, not a missing value or division error."""
+    query = EvalQuery(query_id="Q-MISS", query="miss", relevant_doc_ids=("DOC-Z",))
+    hits = [
+        _hit("C1", source="dense", rank=1, doc_id="DOC-A"),
+        _hit("C2", source="dense", rank=2, doc_id="DOC-B"),
+    ]
+    record = _measure(query, hits, top_k=2)
+
+    assert record["gold_ranks"] == {}
+    assert record["first_gold_rank"] is None
+    assert record["reciprocal_rank"] == 0.0
+    assert record["hit_at_1"] is False
+    assert record["semantic_recall"] == 0.0
+
+
+def test_empty_result_is_zero_metrics_not_a_division_error() -> None:
+    """An arm that returns nothing reports zero recall/MRR/precision/nDCG."""
+    query = EvalQuery(query_id="Q-EMPTY", query="empty", relevant_doc_ids=("DOC-A",))
+    record = _measure(query, [], top_k=10)
+
+    assert record["empty_result"] is True
+    assert record["doc_ids"] == []
+    assert record["gold_ranks"] == {}
+    assert record["first_gold_rank"] is None
+    assert record["reciprocal_rank"] == 0.0
+    assert record["hit_at_1"] is False
+    assert record["semantic_recall"] == 0.0
+    assert record["precision_at_k"] == 0.0
+    assert record["ndcg_at_k"] == 0.0
+
+
 def test_per_query_records_keep_raw_candidates_and_provenance() -> None:
     """Every metric can be recomputed from the stored ranked candidates."""
     result = _run()

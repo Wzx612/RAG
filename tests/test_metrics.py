@@ -14,10 +14,16 @@ from src.evaluation.metrics import (
     LABELS_EXHAUSTIVE,
     METRIC_VERSION,
     RELEVANCE_SCHEME,
+    dedupe_in_order,
+    first_relevant_rank,
+    hit_at_k,
+    latency_summary,
+    mrr_at_k,
     ndcg_at_k,
     percentile,
     precision_at_k,
     recall_at_k,
+    reciprocal_rank_at_k,
 )
 
 # --------------------------------------------------------------------- recall
@@ -285,3 +291,109 @@ def test_percentile_rejects_non_finite_samples(bad: float) -> None:
     """NaN or infinity cannot be a latency."""
     with pytest.raises(ValueError, match="finite"):
         percentile([1.0, bad], 50)
+
+
+# ------------------------------------------------------- shared latency summary
+
+
+def test_latency_summary_reports_count_and_all_percentiles() -> None:
+    """The shared summary carries n, min, P50/P95/P99, max and mean."""
+    summary = latency_summary([1.0, 2.0, 3.0, 4.0, 5.0])
+    assert summary["n"] == 5
+    assert summary["min"] == 1.0
+    assert summary["p50"] == 3.0
+    assert summary["p95"] == 5.0
+    assert summary["p99"] == 5.0
+    assert summary["max"] == 5.0
+    assert summary["mean"] == pytest.approx(3.0)
+
+
+def test_latency_summary_uses_the_same_nearest_rank_rule() -> None:
+    """P99 of 100 samples is the 99th observed value, not an interpolation."""
+    samples = [float(value) for value in range(1, 101)]
+    summary = latency_summary(samples)
+    assert summary["p50"] == 50.0
+    assert summary["p95"] == 95.0
+    assert summary["p99"] == 99.0
+
+
+def test_latency_summary_empty_is_none_not_zero() -> None:
+    """An unmeasured latency must not be reported as a fast one."""
+    summary = latency_summary([])
+    assert summary == {
+        "n": 0,
+        "min": None,
+        "p50": None,
+        "p95": None,
+        "p99": None,
+        "max": None,
+        "mean": None,
+    }
+
+
+def test_latency_summary_does_not_mutate_input() -> None:
+    """Ordering is restored on the caller's list."""
+    samples = [3.0, 1.0, 2.0]
+    latency_summary(samples)
+    assert samples == [3.0, 1.0, 2.0]
+
+
+# -------------------------------------------------------------- rank and MRR
+
+
+def test_dedupe_in_order_keeps_first_rank() -> None:
+    """Document-level ranking collapses repeats at their best position."""
+    assert dedupe_in_order(["b", "a", "b", "c", "a"]) == ["b", "a", "c"]
+
+
+def test_first_relevant_rank_counts_effective_ranks() -> None:
+    """A duplicate before the gold id does not push its rank back."""
+    assert first_relevant_rank(["a", "a", "b"], ["b"], k=10) == 2
+
+
+def test_first_relevant_rank_respects_cutoff() -> None:
+    """A gold id below the cutoff is a miss, not rank 3."""
+    assert first_relevant_rank(["x", "y", "b"], ["b"], k=2) is None
+    assert first_relevant_rank(["x", "y", "b"], ["b"], k=3) == 3
+
+
+def test_first_relevant_rank_empty_ranking_is_none() -> None:
+    """No results means no rank."""
+    assert first_relevant_rank([], ["b"], k=10) is None
+
+
+def test_reciprocal_rank_at_k_matches_one_over_rank() -> None:
+    """RR is exactly 1/rank for a hit and 0.0 for a miss."""
+    assert reciprocal_rank_at_k(["x", "b"], ["b"], k=10) == pytest.approx(0.5)
+    assert reciprocal_rank_at_k(["x", "y"], ["b"], k=10) == 0.0
+
+
+def test_mrr_at_k_means_per_query_reciprocal_ranks() -> None:
+    """MRR averages the per-query terms; a miss contributes zero."""
+    rankings = [(["a"], ["a"]), (["x", "b"], ["b"]), (["x", "y"], ["b"])]
+    assert mrr_at_k(rankings, k=10) == pytest.approx((1.0 + 0.5 + 0.0) / 3)
+
+
+def test_mrr_at_k_empty_rankings_is_zero() -> None:
+    """No evaluated queries gives 0.0, which callers report as no sample."""
+    assert mrr_at_k([], k=10) == 0.0
+
+
+def test_mrr_at_k_rejects_query_without_gold() -> None:
+    """Every pair needs at least one relevant id."""
+    with pytest.raises(ValueError, match="at least one id"):
+        mrr_at_k([(["a"], [])], k=10)
+
+
+@pytest.mark.parametrize("k", [0, -1])
+def test_rank_metrics_reject_non_positive_k(k: int) -> None:
+    """The cutoff rule is shared with recall/precision/nDCG."""
+    with pytest.raises(ValueError, match="k must be positive"):
+        first_relevant_rank(["a"], ["a"], k)
+
+
+def test_hit_at_k_is_true_only_for_a_hit_inside_the_cutoff() -> None:
+    """Hit@K and first_relevant_rank cannot disagree."""
+    assert hit_at_k(["x", "a"], ["a"], k=2) is True
+    assert hit_at_k(["x", "a"], ["a"], k=1) is False
+    assert hit_at_k([], ["a"], k=10) is False

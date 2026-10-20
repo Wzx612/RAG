@@ -166,14 +166,19 @@ def _exhausted_pool() -> Iterator[Any]:
 
 
 @contextmanager
-def _forced_seqscan_off() -> Iterator[psycopg.Connection]:
+def _forced_hnsw_plan() -> Iterator[psycopg.Connection]:
     """Diagnostic planner setup: force HNSW for one transaction only.
 
-    This is never the production default. It exists because at 150 chunks the
-    natural plan is a sequential scan, which ignores ``ef_search`` entirely.
+    This is never the production default. It exists because at this corpus size
+    the natural plan is a sequential scan, which ignores ``ef_search`` entirely.
+    ``enable_bitmapscan`` and ``enable_sort`` are also disabled: once ``chunks``
+    holds several chunk strategies, a ``chunk_strategy`` filter lets the planner
+    pick ``chunks_strategy_idx`` plus a Sort instead of the ANN index.
     """
     with connection() as conn, conn.transaction():
         conn.execute("SET LOCAL enable_seqscan = off", prepare=False)
+        conn.execute("SET LOCAL enable_bitmapscan = off", prepare=False)
+        conn.execute("SET LOCAL enable_sort = off", prepare=False)
         yield conn
 
 
@@ -363,10 +368,14 @@ def test_ef_search_reaches_the_live_guc_and_the_hnsw_scan(
 
     with conn.transaction():
         conn.execute("SET LOCAL enable_seqscan = off", prepare=False)
+        conn.execute("SET LOCAL enable_bitmapscan = off", prepare=False)
+        conn.execute("SET LOCAL enable_sort = off", prepare=False)
         rows, actual_ef = retriever._search(conn, vector.to_list(), 50)
 
     assert actual_ef == 7
-    assert len(rows) == 7
+    # The strategy filter runs after the ANN scan, so Top-K is an upper bound:
+    # at most ef_search rows come back, and some may be other strategies.
+    assert 0 < len(rows) <= 7
     assert current_ef_search(conn) == EF_SEARCH_DEFAULT
 
 
@@ -379,11 +388,12 @@ def test_public_retrieve_consumes_the_configured_ef_search(
     retriever = DenseRetriever(
         DenseConfig(top_n=50, ef_search=7),
         embedder=embedder,
-        connection_factory=_forced_seqscan_off,
+        connection_factory=_forced_hnsw_plan,
     )
     hits = retriever.retrieve(gold_query["query"])
-    assert len(hits) == 7
-    assert [hit.rank for hit in hits] == list(range(1, 8))
+    # ef_search caps the ANN scan; the post-scan strategy filter can leave fewer.
+    assert 0 < len(hits) <= 7
+    assert [hit.rank for hit in hits] == list(range(1, len(hits) + 1))
 
 
 def test_ef_search_does_not_leak_into_the_connection_pool(
@@ -664,7 +674,7 @@ def test_natural_plan_at_150_chunks_is_a_seq_scan(
     conn.prepare_threshold = None
     try:
         with ef_search(conn, 40):
-            plan = _explain(conn, DENSE_SEARCH_SQL, (vector, 10))
+            plan = _explain(conn, DENSE_SEARCH_SQL, (vector, "document", 10))
     finally:
         conn.prepare_threshold = previous
 
@@ -676,15 +686,17 @@ def test_forced_plan_uses_hnsw_and_returns_top_k(
     populated_corpus: None,
     conn: psycopg.Connection,
 ) -> None:
-    """Diagnosis only: seqscan off proves the inner ANN stage can use HNSW."""
+    """Diagnosis only: a forced HNSW plan proves the inner ANN stage is used."""
     vector = _stored_vector(conn)
     previous = conn.prepare_threshold
     conn.prepare_threshold = None
     try:
         with conn.transaction():
             conn.execute("SET LOCAL enable_seqscan = off", prepare=False)
+            conn.execute("SET LOCAL enable_bitmapscan = off", prepare=False)
+            conn.execute("SET LOCAL enable_sort = off", prepare=False)
             with ef_search(conn, 40):
-                plan = _explain(conn, DENSE_SEARCH_SQL, (vector, 10))
+                plan = _explain(conn, DENSE_SEARCH_SQL, (vector, "document", 10))
     finally:
         conn.prepare_threshold = previous
 
@@ -761,7 +773,7 @@ def test_truncation_warning_is_emitted_once_for_a_config(
     retriever = DenseRetriever(
         DenseConfig(top_n=50, ef_search=7),
         embedder=embedder,
-        connection_factory=_forced_seqscan_off,
+        connection_factory=_forced_hnsw_plan,
     )
     handler = _RecordingHandler()
     target = logging.getLogger("apex.src.retrieval.dense")
@@ -772,7 +784,8 @@ def test_truncation_warning_is_emitted_once_for_a_config(
     finally:
         target.removeHandler(handler)
 
-    assert len(first) == len(second) == 7
+    assert len(first) == len(second)
+    assert 0 < len(first) <= 7
     warnings = [
         record.getMessage()
         for record in handler.records

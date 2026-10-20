@@ -29,12 +29,13 @@ from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import psycopg
 from psycopg_pool import PoolTimeout
 from pydantic import ValidationError
 
+from src.evaluation.artifacts import ensure_writable
 from src.evaluation.dense_benchmark import (
     BenchmarkError,
     EvalQuery,
@@ -47,7 +48,7 @@ from src.retrieval.sparse import (
     _cjk_bigrams,
     _fts_query_text,
 )
-from src.schema.retrieval import QueryMode, SparseConfig
+from src.schema.retrieval import QueryMode, RetrievalStrategy, SparseConfig
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -73,6 +74,7 @@ class SparseBenchmarkConfig:
     warmup_passes: int = 1
     statement_timeout_ms: int = 5000
     query_mode: QueryMode = "or"
+    chunk_strategy: str = "document"
 
 
 @dataclass(frozen=True)
@@ -101,10 +103,15 @@ def build_config(
     warmup_passes: int,
     statement_timeout_ms: int,
     query_mode: QueryMode = "or",
+    chunk_strategy: str = "document",
 ) -> SparseBenchmarkConfig:
     """Validate benchmark knobs through ``SparseConfig`` and explicit ranges."""
     try:
-        SparseConfig(top_n=top_k, query_mode=query_mode)
+        SparseConfig(
+            top_n=top_k,
+            query_mode=query_mode,
+            chunk_strategy=cast(RetrievalStrategy, chunk_strategy),
+        )
     except ValidationError as exc:
         raise BenchmarkError(f"invalid benchmark configuration: {exc}") from exc
     if repetitions < 1:
@@ -119,6 +126,7 @@ def build_config(
         warmup_passes=warmup_passes,
         statement_timeout_ms=statement_timeout_ms,
         query_mode=query_mode,
+        chunk_strategy=chunk_strategy,
     )
 
 
@@ -155,7 +163,7 @@ def _run_query(
         if cjk_terms:
             rows = conn.execute(
                 SPARSE_CJK_SQL,
-                (cjk_terms, cjk_terms, config.top_k),
+                (cjk_terms, cjk_terms, config.chunk_strategy, config.top_k),
                 prepare=False,
             ).fetchall()
             path = "cjk"
@@ -166,13 +174,14 @@ def _run_query(
                     list(rank_weights),
                     language,
                     _fts_query_text(query, query_mode),
+                    config.chunk_strategy,
                     config.top_k,
                 ),
                 prepare=False,
             ).fetchall()
             path = "fts"
         query_ms = (time.perf_counter() - started) * 1000.0
-    return _rows_to_hits(rows, config.top_k), path, query_ms
+    return _rows_to_hits(rows, config.top_k, config.chunk_strategy), path, query_ms
 
 
 def _db_call(
@@ -191,14 +200,24 @@ def _db_call(
     return hits, path, query_ms, db_ms
 
 
-def _rows_to_hits(rows: Sequence[Sequence[Any]], top_k: int) -> list[SparseHit]:
+def _rows_to_hits(
+    rows: Sequence[Sequence[Any]],
+    top_k: int,
+    expected_strategy: str | None = None,
+) -> list[SparseHit]:
     """Map SELECT columns to validated hits; reject non-finite/negative scores."""
     hits: list[SparseHit] = []
     for row_index, row in enumerate(rows, start=1):
         try:
             score = float(row[5])
+            strategy = str(row[2])
         except (TypeError, ValueError, IndexError) as exc:
             raise BenchmarkError(f"malformed sparse row: {row!r}") from exc
+        if expected_strategy is not None and strategy != expected_strategy:
+            raise BenchmarkError(
+                f"sparse retrieval returned chunk_strategy={strategy!r} for chunk {row[0]!r}, "
+                f"expected {expected_strategy!r}"
+            )
         if not math.isfinite(score) or score < 0:
             raise BenchmarkError(f"invalid sparse score for chunk {row[0]!r}: {score}")
         hits.append(
@@ -660,6 +679,7 @@ def run_sparse_benchmark(
             "rank_weights": list(rank_weights),
             "language": language,
             "query_mode": config.query_mode,
+            "chunk_strategy": config.chunk_strategy,
         },
         "definitions": {
             "granularity": "chunk row; doc-level metrics deduplicate doc_id in rank order",
@@ -762,7 +782,8 @@ def render_markdown(result: Mapping[str, Any]) -> str:
         f"- Queries: {parameters.get('queries', '?')}  |  K: {parameters.get('top_k', '?')}  "
         f"|  Timed passes: {parameters.get('repetitions', '?')}  |  "
         f"Warm-ups: {parameters.get('warmup_passes', '?')}  |  "
-        f"Statement timeout: {parameters.get('statement_timeout_ms', '?')} ms",
+        f"Statement timeout: {parameters.get('statement_timeout_ms', '?')} ms  |  "
+        f"Chunk strategy: `{parameters.get('chunk_strategy', '?')}`",
         "",
         "## 1. Environment and dataset",
         "",
@@ -786,6 +807,13 @@ def render_markdown(result: Mapping[str, Any]) -> str:
             f"{environment.get('documents', '?')} / {environment.get('chunks', '?')}",
         ),
         ("Distinct chunk doc_ids", environment.get("distinct_chunk_docs")),
+        (
+            "Scoped chunks / doc_ids",
+            f"{environment.get('strategy_chunks', '?')} / "
+            f"{environment.get('strategy_docs', '?')} "
+            f"(`{environment.get('chunk_strategy', '?')}`)",
+        ),
+        ("Chunk strategies in table", environment.get("chunk_strategies")),
         ("Eval queries", dataset.get("queries")),
         ("Gold sizes", dataset.get("gold_sizes")),
         ("Missing gold docs", _fmt_list(dataset.get("missing_gold_docs", []))),
@@ -863,7 +891,10 @@ def render_markdown(result: Mapping[str, Any]) -> str:
                     ["Metric", "AND control"],
                     [
                         ("Evaluated queries", control_quality.get("evaluated_queries")),
-                        ("Semantic Recall mean", _fmt(control_quality.get("semantic_recall_mean"))),
+                        (
+                            "Semantic Recall mean",
+                            _fmt(control_quality.get("semantic_recall_mean")),
+                        ),
                         ("Perfect-recall queries", control_quality.get("perfect_recall_queries")),
                         ("Zero-recall queries", control_quality.get("zero_recall_queries")),
                         ("Empty-result queries", control_quality.get("empty_result_queries")),
@@ -1081,8 +1112,15 @@ def write_outputs(
     result: Mapping[str, Any],
     json_path: Path,
     report_path: Path,
+    *,
+    overwrite: bool = False,
 ) -> None:
-    """Write the raw JSON artifact and the Markdown report, creating parents."""
+    """Write the raw JSON artifact and the Markdown report, creating parents.
+
+    Existing artifacts are never replaced unless ``overwrite`` is set, so a
+    historical report cannot be lost by an accidental re-run.
+    """
+    ensure_writable((json_path, report_path), overwrite=overwrite)
     json_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.parent.mkdir(parents=True, exist_ok=True)
     serializable = dict(result)

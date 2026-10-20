@@ -40,6 +40,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import psycopg  # noqa: E402
 from src.config import PROJECT_ROOT, get_settings  # noqa: E402
 from src.db import connection, current_ef_search, scalar  # noqa: E402
+from src.evaluation.artifacts import ArtifactExistsError, ensure_writable  # noqa: E402
 from src.evaluation.dense_benchmark import (  # noqa: E402
     BenchmarkConfig,
     BenchmarkError,
@@ -60,6 +61,32 @@ KB_PATH = DATA_DIR / "kb_documents.json"
 QUERY_PATH = DATA_DIR / "eval_queries.json"
 DEFAULT_OUTPUT = PROJECT_ROOT / "reports" / "dense_benchmark.json"
 DEFAULT_REPORT = PROJECT_ROOT / "reports" / "dense_benchmark.md"
+
+
+class _ArtifactWriter:
+    """Write this benchmark's artifacts once, honouring the safety flags.
+
+    ``--no-write`` suppresses every write, including blocked artifacts, so a
+    smoke run cannot touch the historical reports. ``--overwrite`` is the only
+    way to replace an existing artifact.
+    """
+
+    def __init__(
+        self, output: Path, report: Path, *, overwrite: bool, enabled: bool
+    ) -> None:
+        """Store the targets and the two safety flags."""
+        self.output = output
+        self.report = report
+        self.overwrite = overwrite
+        self.enabled = enabled
+
+    def __call__(self, payload: dict[str, Any]) -> None:
+        """Write both artifacts, or print that the write was skipped."""
+        if not self.enabled:
+            print("--no-write: artifacts were not written")
+            return
+        write_outputs(payload, self.output, self.report, overwrite=self.overwrite)
+        print(f"Wrote {self.output} and {self.report}")
 
 
 class _FixedVectorEmbedder:
@@ -85,6 +112,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--top-k", type=int, default=10, help="Top-K shared by all arms")
     parser.add_argument(
+        "--chunk-strategy",
+        choices=("document", "fixed_window", "structured"),
+        default="document",
+        help="Chunking strategy every arm is restricted to",
+    )
+    parser.add_argument(
         "--ef-search",
         type=int,
         nargs="+",
@@ -106,6 +139,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="Use only the first N eval queries (smoke test; the full report uses 30)",
     )
     parser.add_argument("--dry-run", action="store_true", help="Print matrix and exit")
+    parser.add_argument("--no-write", action="store_true", help="Do not write report files")
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Replace existing report files at the selected paths",
+    )
     parser.add_argument(
         "--docker-timeout",
         type=float,
@@ -188,8 +227,13 @@ def _sha256(path: Path) -> str:
         return "missing"
 
 
-def _read_db_facts() -> dict[str, Any]:
-    """Collect read-only database facts used by the report and the gates."""
+def _read_db_facts(chunk_strategy: str = "document") -> dict[str, Any]:
+    """Collect read-only database facts used by the report and the gates.
+
+    The gate counts are scoped to ``chunk_strategy``: several chunkings may
+    coexist in ``chunks``, and a global count would reject a perfectly valid
+    single-strategy run. Global counts stay in the report as context.
+    """
     settings = get_settings()
     with connection() as conn:
         addr = conn.execute(
@@ -211,6 +255,15 @@ def _read_db_facts() -> dict[str, Any]:
         documents = int(scalar(conn, "SELECT count(*) FROM documents") or 0)
         chunks = int(scalar(conn, "SELECT count(*) FROM chunks") or 0)
         distinct_docs = int(scalar(conn, "SELECT count(DISTINCT doc_id) FROM chunks") or 0)
+        strategy_counts = conn.execute(
+            "SELECT count(*), count(DISTINCT doc_id) FROM chunks WHERE chunk_strategy = %s",
+            (chunk_strategy,),
+        ).fetchone()
+        strategy_chunks, strategy_docs = (
+            (int(strategy_counts[0]), int(strategy_counts[1]))
+            if strategy_counts is not None
+            else (0, 0)
+        )
         strategies = conn.execute(
             "SELECT chunk_strategy, count(*) FROM chunks GROUP BY chunk_strategy "
             "ORDER BY chunk_strategy"
@@ -238,9 +291,12 @@ def _read_db_facts() -> dict[str, Any]:
         if reloptions and reloptions[0]
         else "not recorded",
         "ef_search_default": ef_default,
+        "chunk_strategy": chunk_strategy,
         "documents": documents,
         "chunks": chunks,
         "distinct_chunk_docs": distinct_docs,
+        "strategy_chunks": strategy_chunks,
+        "strategy_docs": strategy_docs,
         "chunk_strategies": dict(strategies),
         "embedding_dimensions": sorted(dimensions),
         "embedding_model": settings.embedding_model,
@@ -262,15 +318,25 @@ def _gold_missing(queries: Sequence[EvalQuery]) -> list[str]:
     return [doc_id for doc_id in gold if doc_id not in found]
 
 
-def _post_run_counts() -> dict[str, Any]:
-    """Read the row counts again, to prove the benchmark did not write."""
+def _post_run_counts(chunk_strategy: str = "document") -> dict[str, Any]:
+    """Read the row counts again, to prove the benchmark did not write.
+
+    The scoped counts are the ones the gate compares: unrestricted global
+    counts would move whenever an unrelated chunking strategy is written.
+    """
     with connection() as conn:
+        strategy_counts = conn.execute(
+            "SELECT count(*), count(DISTINCT doc_id) FROM chunks WHERE chunk_strategy = %s",
+            (chunk_strategy,),
+        ).fetchone()
         return {
             "documents": int(scalar(conn, "SELECT count(*) FROM documents") or 0),
             "chunks": int(scalar(conn, "SELECT count(*) FROM chunks") or 0),
             "distinct_chunk_docs": int(
                 scalar(conn, "SELECT count(DISTINCT doc_id) FROM chunks") or 0
             ),
+            "strategy_chunks": int(strategy_counts[0]) if strategy_counts else 0,
+            "strategy_docs": int(strategy_counts[1]) if strategy_counts else 0,
             "embedding_dimensions": sorted(
                 int(row[0])
                 for row in conn.execute(
@@ -332,9 +398,12 @@ def _print_environment(env: dict[str, Any], dataset: dict[str, Any]) -> None:
         "hnsw_index",
         "hnsw_parameters",
         "ef_search_default",
+        "chunk_strategy",
         "documents",
         "chunks",
         "distinct_chunk_docs",
+        "strategy_chunks",
+        "strategy_docs",
         "chunk_strategies",
         "embedding_dimensions",
         "embedding_model",
@@ -378,8 +447,7 @@ def _print_matrix(configs: Sequence[BenchmarkConfig], estimated: dict[str, int])
 
 def _write_blocked(
     message: str,
-    output: Path,
-    report: Path,
+    writer: _ArtifactWriter,
     *,
     environment: dict[str, Any] | None = None,
     dataset: dict[str, Any] | None = None,
@@ -396,9 +464,8 @@ def _write_blocked(
         "configs": [],
         "totals": {"errors": 0, "timeouts": 0, "skipped": 0, "invalid_configs": 0},
     }
-    write_outputs(payload, output, report)
     print(f"BLOCKED: {message}")
-    print(f"Wrote blocked artifacts to {output} and {report}")
+    writer(payload)
 
 
 def _embed_queries(
@@ -460,7 +527,11 @@ def _production_sanity(
     measurement.
     """
     retriever = DenseRetriever(
-        DenseConfig(top_n=config.top_k, ef_search=config.ef_search),
+        DenseConfig(
+            top_n=config.top_k,
+            ef_search=config.ef_search,
+            chunk_strategy=config.chunk_strategy,  # type: ignore[arg-type]
+        ),
         embedder=_FixedVectorEmbedder(vector),
     )
     hits = retriever.retrieve(query.query)
@@ -507,8 +578,21 @@ def main(argv: list[str] | None = None) -> int:
         print("BLOCKED: --limit must be positive")
         return 2
 
+    writer = _ArtifactWriter(
+        args.output,
+        args.report,
+        overwrite=args.overwrite,
+        enabled=not args.no_write,
+    )
+    if not args.no_write and not args.dry_run:
+        try:
+            ensure_writable((args.output, args.report), overwrite=args.overwrite)
+        except ArtifactExistsError as exc:
+            print(f"BLOCKED: {exc}")
+            return 2
+
     try:
-        env = _read_db_facts()
+        env = _read_db_facts(args.chunk_strategy)
         env.update(
             {
                 "python_version": platform.python_version(),
@@ -521,27 +605,27 @@ def main(argv: list[str] | None = None) -> int:
         )
     except (psycopg.Error, ConnectionError) as exc:
         message = f"PostgreSQL is not reachable; benchmark not started: {exc}"
-        _write_blocked(message, args.output, args.report)
+        _write_blocked(message, writer)
         return 2
 
     try:
         report = inspect_source()
     except Exception as exc:  # noqa: BLE001 -- surface the corpus problem as a gate
         message = f"knowledge base is not usable; benchmark not started: {exc}"
-        _write_blocked(message, args.output, args.report, environment=env)
+        _write_blocked(message, writer, environment=env)
         return 2
     if not report.ok:
         message = (
             f"knowledge base has {len(report.problems)} invalid record(s); benchmark not started"
         )
-        _write_blocked(message, args.output, args.report, environment=env)
+        _write_blocked(message, writer, environment=env)
         return 2
 
     try:
         all_queries = load_eval_queries(QUERY_PATH)
     except BenchmarkError as exc:
         message = f"eval queries are not usable; benchmark not started: {exc}"
-        _write_blocked(message, args.output, args.report, environment=env)
+        _write_blocked(message, writer, environment=env)
         return 2
 
     missing_gold = _gold_missing(all_queries)
@@ -551,7 +635,7 @@ def main(argv: list[str] | None = None) -> int:
             f"{', '.join(missing_gold[:10])}"
         )
         data = _dataset_metadata(all_queries, len(all_queries), args.limit, missing_gold)
-        _write_blocked(message, args.output, args.report, environment=env, dataset=data)
+        _write_blocked(message, writer, environment=env, dataset=data)
         return 2
 
     expected_documents = get_settings().expected_document_count
@@ -564,14 +648,24 @@ def main(argv: list[str] | None = None) -> int:
         gate_problems.append(
             f"database documents={env['documents']}, expected {expected_documents}"
         )
-    if env["chunks"] != expected_documents:
-        gate_problems.append(f"database chunks={env['chunks']}, expected {expected_documents}")
-    if env["distinct_chunk_docs"] != expected_documents:
+    if env["strategy_chunks"] < expected_documents:
         gate_problems.append(
-            f"distinct chunk doc_ids={env['distinct_chunk_docs']}, expected {expected_documents}"
+            f"chunks for strategy {env['chunk_strategy']!r}={env['strategy_chunks']}, "
+            f"expected at least {expected_documents}"
+        )
+    if args.chunk_strategy == "document" and env["strategy_chunks"] != expected_documents:
+        gate_problems.append(
+            f"document-strategy chunks={env['strategy_chunks']}, expected {expected_documents}"
+        )
+    if env["strategy_docs"] != expected_documents:
+        gate_problems.append(
+            f"distinct chunk doc_ids for strategy {env['chunk_strategy']!r}="
+            f"{env['strategy_docs']}, expected {expected_documents}"
         )
     if env["embedding_dimensions"] != [get_settings().embedding_dim]:
-        gate_problems.append(f"embedding dimensions={env['embedding_dimensions']}, expected [1024]")
+        gate_problems.append(
+            f"embedding dimensions={env['embedding_dimensions']}, expected [1024]"
+        )
     if env["hnsw_index"] == "missing":
         gate_problems.append("HNSW index is missing")
     if env["vector_version"] == "missing":
@@ -579,11 +673,11 @@ def main(argv: list[str] | None = None) -> int:
     if gate_problems:
         message = "environment gate failed: " + "; ".join(gate_problems)
         data = _dataset_metadata(all_queries, len(all_queries), args.limit, missing_gold)
-        _write_blocked(message, args.output, args.report, environment=env, dataset=data)
+        _write_blocked(message, writer, environment=env, dataset=data)
         return 2
 
     selected = list(all_queries[: args.limit] if args.limit else all_queries)
-    configs = build_configs(args.top_k, args.ef_search)
+    configs = build_configs(args.top_k, args.ef_search, args.chunk_strategy)
     dataset = _dataset_metadata(selected, len(all_queries), args.limit, missing_gold)
     estimated = _estimate_workload(len(selected), configs, args.repetitions, args.warmup_passes)
 
@@ -599,7 +693,7 @@ def main(argv: list[str] | None = None) -> int:
         vectors, embedding = _embed_queries(selected)
     except Exception as exc:  # noqa: BLE001 -- a model failure blocks the benchmark
         message = f"embedding failed; benchmark not started: {type(exc).__name__}: {exc}"
-        _write_blocked(message, args.output, args.report, environment=env, dataset=dataset)
+        _write_blocked(message, writer, environment=env, dataset=dataset)
         return 2
     print(
         f"model_load_ms={embedding['model_load_ms']:.2f} "
@@ -621,7 +715,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     except BenchmarkError as exc:
         message = f"benchmark could not establish a valid baseline: {exc}"
-        _write_blocked(message, args.output, args.report, environment=env, dataset=dataset)
+        _write_blocked(message, writer, environment=env, dataset=dataset)
         return 2
 
     natural = next((config for config in result["configs"] if config["mode"] == "natural"), None)
@@ -639,12 +733,13 @@ def main(argv: list[str] | None = None) -> int:
         except (psycopg.Error, ConnectionError) as exc:
             sanity = {"query_id": first_query.query_id, "error": str(exc), "match": None}
 
-    post = _post_run_counts()
+    post = _post_run_counts(args.chunk_strategy)
     dataset["post_run_counts"] = post
     dataset["data_integrity_ok"] = (
         post["documents"] == env["documents"]
         and post["chunks"] == env["chunks"]
-        and post["distinct_chunk_docs"] == env["distinct_chunk_docs"]
+        and post["strategy_chunks"] == env["strategy_chunks"]
+        and post["strategy_docs"] == env["strategy_docs"]
         and post["embedding_dimensions"] == env["embedding_dimensions"]
     )
 
@@ -675,9 +770,8 @@ def main(argv: list[str] | None = None) -> int:
     result["issues"] = issues
     result["status"] = "PASS" if not issues else "ISSUES"
 
-    write_outputs(result, args.output, args.report)
     _print_summary(result)
-    print(f"Wrote {args.output} and {args.report}")
+    writer(result)
     return 0 if not issues else 1
 
 
