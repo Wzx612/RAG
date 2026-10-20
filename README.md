@@ -3,11 +3,12 @@
 30 条标注 Query 上，量化对比**朴素稠密检索**与**混合检索 + 重排序**流水线，
 并把最终证据接入可替换的 LLM Provider 生成带引用的答案。
 
-> 当前进度：**阶段 ⑧（RAG 端到端问答链路集成与评测）已实现并完成离线实测，
-> 等待人工验收**；**阶段 ⑨（README / roadmap 定稿）文档已定稿，等待人工验收**；
-> **阶段 ⑩（项目最终整合与 GitHub 提交准备）交付检查完成，等待人工确认**。
-> 仓库已初始化 Git（`main` 分支，已有历史提交），当前工作区仍有未提交改动；
-> 本轮未执行 commit / push，提交范围与远程仓库仍需人工确认。
+> 当前进度：核心任务 ①–⑩ 已完成；GitHub 仓库已同步至 `main`
+> （<https://github.com/Wzx612/RAG>）。真实 30/30 Judge 为 PASS，
+> Bonus C 的 `POST /api/v1/search` 与 Swagger 已在容器内实际请求通过。
+> 仍有明确记录的未验证项（浏览器渲染、真实 LLM 版正式 `rag_benchmark`、
+> 人工 Judge 校准与 inter-judge 一致性等），见下文；这些项已被标记为
+> `NOT RUN`，不能当作已通过，但不影响本次提交。
 > ⑦-B 已验收，判定 PASS WITH MINOR ISSUES。Dense、Sparse OR/AND、
 > 候选并集、RRF 与 Cross-Encoder Reranker 均已在真实 PostgreSQL 上跑完 30 条标注
 > Query。阶段 ⑧ 新增上下文组装、提示词、OpenAI 兼容 Provider、引用校验、结构化答案
@@ -267,12 +268,14 @@ SELECT count(*) FROM chunks WHERE embedding <#> embedding = 0;   -- 0（没有�
 
 ## GitHub 交付与复现状态
 
-> 本节记录阶段 ⑩ 的只读交付检查结论；它不表示项目已通过生产级验收，也不表示
-> 已经执行 `git commit` 或 `git push`。
+> 本节记录项目交付与 GitHub 同步状态；它不表示项目已通过生产级验收。
 
-- **Git 仓库已初始化**：仓库根目录存在 `.git`，当前分支为 `main`，已有历史提交
-  （检查时最新提交为 `15a391b`）。检查时工作区仍有未提交改动（包括本轮修改）；
-  本轮未执行 `git add`、`git commit` 或 `git push`，提交范围与远程仓库仍需人工确认。
+- **Git 仓库已同步**：`main` 已推送至 `origin`
+  （<https://github.com/Wzx612/RAG>）。2026-10-20 的同步提交为 `b31e053`
+  （`Sync complete RAG assessment: unified benchmarks, Judge 30/30, FastAPI search and reports`），
+  包含 136 个文件变更；此后如有文档或图表修订，以仓库最新提交为准。
+  当前工作区仅保留图表渲染改进的未提交修改，不影响已推送版本；是否把该改进
+  纳入提交仍由人工确认。
 - **`.env` 是本地文件，可能含真实凭据**，已在 `.gitignore` 与 `.dockerignore` 中
   排除；不要提交、打包或上传。若曾把 `.env` 复制到别处，建议轮换其中的 Key。
 - **模型缓存**：`.cache/huggingface` 约 1.1 GB，已被 `.gitignore` 排除；
@@ -289,9 +292,11 @@ SELECT count(*) FROM chunks WHERE embedding <#> embedding = 0;   -- 0（没有�
   `.env.example`、`.gitignore`、`.dockerignore`、`.github/workflows/ci.yml`。
 - **CI**：`.github/workflows/ci.yml` 在 Ubuntu + Python 3.12 上运行 ruff、mypy 与
   纯单元测试（跳过真实模型下载；数据库用例在无 PostgreSQL 时由 `conftest.py` skip）。
-  该工作流**尚未在 GitHub 上运行过**；本地也没有执行其中任何命令。
+  该工作流已随 `b31e053` 推送触发；本次未查看 GitHub Actions 的运行结果，
+  因此不宣称 CI 已通过。
 - **复现性状态**：`pyproject.toml` 对直接依赖使用精确 pin，容器构建按该声明安装；
-  仓库仍没有覆盖全部传递依赖的锁文件。宿主已安装版本与声明存在漂移（见下一节），
+  `uv.lock` 已提交，但容器仍按 `pyproject.toml` 安装，未验证锁文件与镜像依赖完全一致。
+  宿主已安装版本与声明存在漂移（见下一节），
   历史报告记录的是宿主实测版本，不能当作 pin 的安装验证。`psutil` 已声明为必需
   依赖（`src/evaluation/rerank_benchmark.py` 在模块级导入）；MIT `LICENSE` 文件已补齐。
   其版权行目前使用集体署名 “Apex RAG contributors”（2026）；若公开时要求填写具体
@@ -1120,7 +1125,7 @@ SHA256 为 `7f2a79f3dc2e785a570f319b87ce7dd9dbe954d5186c5f84ca593220347d6327`。
 | ⑦-B | Reranker 实现与评测 | ✅ 完成（实测，宿主 CPU） | **PASS WITH MINOR ISSUES** | `reports/rerank_benchmark.md` / `.json`（Status: PASS；30/30 queries，0 errors，0 fallbacks；RRF+Reranker Recall 1.0000、MRR 0.9833、Hit@1 29/30；RRF MRR 0.9500；历史四臂复核 0 mismatch，RRF 公式复核 300 hits / 0 mismatch）；未验证项保留在下方 |
 | ⑧ | RAG 端到端问答链路集成与评测 | ✅ 完成（离线链路实测；正式报告未调用真实 LLM） | **待人工验收**（自评 PARTIAL，不替代验收） | `reports/rag_benchmark.md` / `.json`（Status: PARTIAL；30/30 status=ok，引用有效 30/30，证据 Recall 1.0000、MRR 0.9833；Provider=mock，historical 重放）；真实 30/30 RAG + Judge 见 ⑫ |
 | ⑨ | README / roadmap 定稿 | 🟡 文档已定稿 | **待人工验收** | `README.md`、`docs/roadmap.md`；指标仅引用 `reports/*` 与 Stage A 审核报告，未重新运行任何测试 |
-| ⑩ | 项目最终整合与 GitHub 提交准备 | 🟡 交付检查完成 | **待人工确认**；未 commit / push | 本阶段只读检查 README、roadmap、architecture、报告、依赖与忽略配置；未重新运行任何测试 |
+| ⑩ | 项目最终整合与 GitHub 提交准备 | ✅ 已提交并推送 | **已同步 `origin/main`**（`b31e053`） | 本阶段只读检查 README、roadmap、architecture、报告、依赖与忽略配置；提交本身未重新运行测试，测试结果单列于“测试与静态检查” |
 | ⑪ | P0+P1+P2 迭代：统一评测/报告、索引与分块实验、CLI、FastAPI、容器编排 | 🟡 部分实现已验证 | **PARTIAL（容器 + 宿主）** | 宿主：Ruff / mypy / 纯单元 pytest（506 用例、2 skipped、`EXIT=0`）通过；4 个 DB planner/benchmark 用例通过。容器：`db-check` 9/9、三策略 ingest（150/267/161）、模型离线加载、统一检索（6 arms PASS）、索引（PARTIAL，`synthetic_scale=1`）、分块（PASS，含 rerank）、RRF 敏感性（PASS）、`test_dense_retrieval.py`（46 passed、1 skipped）、全量 pytest（664 passed、1 skipped、`EXIT=0`）；artifact 在 `reports/unified/`，日志在 `reports/container/`。**已由 ⑫/⑬ 补上**：`final_report.md`（PASS）、figures、真实 30/30 Judge、API 服务与验收接口；**仍未完成**：浏览器渲染、真实 LLM 版正式 `rag_benchmark` |
 | ⑫ | LLM-as-a-Judge：Context Relevance / Faithfulness | ✅ 真实 30/30 全量 Judge 已执行 | **PASS（自动评估；人工校准未做）** | `src/schema/judge.py`、`src/evaluation/judge_prompts.py` / `judge.py` / `judge_evaluation.py`、`scripts/evaluate_judge.py`、`make judge`；测试 `tests/test_judge.py`、`tests/test_judge_evaluation.py`。宿主 Ruff / mypy / 定向 pytest（36，3 skipped）通过；容器 mock smoke 与全量 pytest（`691 passed, 1 skipped`）通过；**真实 30/30 已执行**（`reports/judge/`，`status=PASS`、0 失败、0 NOT RUN，CR mean 3.9667、Faithfulness mean 5.0000，`real_judge_calls=true`、`same_model=true`）；`final_report.md` 已重生成并输出 `Report status: PASS`；历史 3/30 smoke 归档在 `reports/judge-real-3q/`。人工校准与 inter-judge 一致性仍 `NOT RUN` |
 
