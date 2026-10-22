@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="信用卡智能客服助手">
+  <defs>
+    <linearGradient id="bg" x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#123A68" />
+      <stop offset="1" stop-color="#0B2442" />
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="url(#bg)" />
+  <path d="M32 10 50 17v14c0 11-7.4 18.8-18 23-10.6-4.2-18-12-18-23V17l18-7Z" fill="none" stroke="#DCEBFF" stroke-width="2.4" stroke-linejoin="round" />
+  <ellipse cx="32" cy="25" rx="9" ry="3.6" fill="none" stroke="#7FB4FF" stroke-width="2" />
+  <path d="M23 25v9c0 2 4 3.6 9 3.6s9-1.6 9-3.6v-9" fill="none" stroke="#7FB4FF" stroke-width="2" />
+  <path d="M23 30c0 2 4 3.6 9 3.6s9-1.6 9-3.6" fill="none" stroke="#7FB4FF" stroke-width="2" />
+</svg>
